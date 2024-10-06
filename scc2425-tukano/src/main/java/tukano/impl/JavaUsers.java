@@ -22,14 +22,25 @@ public class JavaUsers implements Users {
 	private static Logger Log = Logger.getLogger(JavaUsers.class.getName());
 
 	private static Users instance;
-	
+
+	private static final boolean COSMOS_DB = true;
+	private static final String CONTAINER_NAME = "users";
+
 	synchronized public static Users getInstance() {
 		if( instance == null )
 			instance = new JavaUsers();
 		return instance;
 	}
 	
-	private JavaUsers() {}
+	private JavaUsers() {
+		if(COSMOS_DB) {
+			DB.configureCosmosDB();
+			DB.changeContainerName(CONTAINER_NAME);
+		}
+		else {
+			DB.configureHibernateDB();
+		}
+	}
 	
 	@Override
 	public Result<String> createUser(User user) {
@@ -38,7 +49,7 @@ public class JavaUsers implements Users {
 		if( badUserInfo( user ) )
 				return error(BAD_REQUEST);
 
-		return errorOrValue( DB.insertOne( user), user.getUserId() );
+		return errorOrValue( DB.insertOne( user), user.getId() );
 	}
 
 	@Override
@@ -84,7 +95,7 @@ public class JavaUsers implements Users {
 	public Result<List<User>> searchUsers(String pattern) {
 		Log.info( () -> format("searchUsers : patterns = %s\n", pattern));
 
-		var query = format("SELECT * FROM User u WHERE UPPER(u.userId) LIKE '%%%s%%'", pattern.toUpperCase());
+		var query = format("SELECT * FROM User u WHERE UPPER(u.id) LIKE '%%%s%%'", pattern.toUpperCase());
 		var hits = DB.sql(query, User.class)
 				.stream()
 				.map(User::copyWithoutPassword)
@@ -106,6 +117,6 @@ public class JavaUsers implements Users {
 	}
 	
 	private boolean badUpdateUserInfo( String userId, String pwd, User info) {
-		return (userId == null || pwd == null || info.getUserId() != null && ! userId.equals( info.getUserId()));
+		return (userId == null || pwd == null || info.getId() != null && ! userId.equals( info.getId()));
 	}
 }

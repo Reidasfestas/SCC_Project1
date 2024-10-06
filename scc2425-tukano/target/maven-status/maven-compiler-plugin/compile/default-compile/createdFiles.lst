@@ -10,11 +10,13 @@ main/java/utils/Props.class
 main/java/tukano/impl/JavaUsers.class
 main/test/tukano/clients/rest/RestShortsClient$2.class
 tukano/impl/rest/utils/GenericExceptionMapper.class
+main/java/utils/CosmosDatabase.class
 main/java/utils/Random.class
 main/java/utils/IP.class
 main/test/tukano/clients/rest/RestUsersClient.class
 main/java/tukano/impl/rest/RestResource$1.class
 main/java/utils/Hibernate.class
+main/java/utils/Database.class
 main/java/tukano/impl/rest/RestResource.class
 main/java/tukano/api/OkResult.class
 main/java/tukano/api/rest/RestShorts.class
@@ -27,6 +29,8 @@ main/java/tukano/api/Result.class
 main/java/utils/Args.class
 main/java/tukano/impl/JavaShorts.class
 main/java/tukano/api/Shorts.class
+main/java/tukano/api/UserDAO.class
+main/java/tukano/api/ShortDAO.class
 main/java/utils/Hex.class
 main/test/tukano/clients/rest/RestBlobsClient.class
 main/java/utils/JSON.class
@@ -51,3 +55,4 @@ main/java/tukano/api/User.class
 main/java/tukano/impl/rest/RestBlobsResource.class
 main/java/utils/TryCatch$ThrowableSupplier.class
 main/java/tukano/api/Users.class
+main/java/utils/HibernateDatabase.class

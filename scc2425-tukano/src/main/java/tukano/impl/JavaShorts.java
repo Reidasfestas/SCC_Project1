@@ -29,6 +29,9 @@ public class JavaShorts implements Shorts {
 	private static Logger Log = Logger.getLogger(JavaShorts.class.getName());
 	
 	private static Shorts instance;
+
+	private static final boolean COSMOS_DB = true;
+	private static final String CONTAINER_NAME = "shorts";
 	
 	synchronized public static Shorts getInstance() {
 		if( instance == null )
@@ -36,7 +39,15 @@ public class JavaShorts implements Shorts {
 		return instance;
 	}
 	
-	private JavaShorts() {}
+	private JavaShorts() {
+		if(COSMOS_DB) {
+			DB.configureCosmosDB();
+			DB.changeContainerName(CONTAINER_NAME);
+		}
+		else {
+			DB.configureHibernateDB();
+		}
+	}
 	
 	
 	@Override
@@ -60,7 +71,7 @@ public class JavaShorts implements Shorts {
 		if( shortId == null )
 			return error(BAD_REQUEST);
 
-		var query = format("SELECT count(*) FROM Likes l WHERE l.shortId = '%s'", shortId);
+		var query = format("SELECT count(*) FROM Likes l WHERE l.id = '%s'", shortId);
 		var likes = DB.sql(query, Long.class);
 		return errorOrValue( getOne(shortId, Short.class), shrt -> shrt.copyWithLikes_And_Token( likes.get(0)));
 	}
@@ -77,7 +88,7 @@ public class JavaShorts implements Shorts {
 
 					hibernate.remove( shrt);
 					
-					var query = format("DELETE Likes l WHERE l.shortId = '%s'", shortId);
+					var query = format("DELETE Likes l WHERE l.id = '%s'", shortId);
 					hibernate.createNativeQuery( query, Likes.class).executeUpdate();
 					
 					JavaBlobs.getInstance().delete(shrt.getBlobUrl(), Token.get() );
@@ -90,7 +101,7 @@ public class JavaShorts implements Shorts {
 	public Result<List<String>> getShorts(String userId) {
 		Log.info(() -> format("getShorts : userId = %s\n", userId));
 
-		var query = format("SELECT s.shortId FROM Short s WHERE s.ownerId = '%s'", userId);
+		var query = format("SELECT s.id FROM Short s WHERE s.ownerId = '%s'", userId);
 		return errorOrValue( okUser(userId), DB.sql( query, String.class));
 	}
 
@@ -130,7 +141,7 @@ public class JavaShorts implements Shorts {
 
 		return errorOrResult( getShort(shortId), shrt -> {
 			
-			var query = format("SELECT l.userId FROM Likes l WHERE l.shortId = '%s'", shortId);					
+			var query = format("SELECT l.id FROM Likes l WHERE l.id = '%s'", shortId);
 			
 			return errorOrValue( okUser( shrt.getOwnerId(), password ), DB.sql(query, String.class));
 		});
@@ -141,9 +152,9 @@ public class JavaShorts implements Shorts {
 		Log.info(() -> format("getFeed : userId = %s, pwd = %s\n", userId, password));
 
 		final var QUERY_FMT = """
-				SELECT s.shortId, s.timestamp FROM Short s WHERE	s.ownerId = '%s'				
+				SELECT s.id, s.timestamp FROM Short s WHERE	s.ownerId = '%s'				
 				UNION			
-				SELECT s.shortId, s.timestamp FROM Short s, Following f 
+				SELECT s.id, s.timestamp FROM Short s, Following f 
 					WHERE 
 						f.followee = s.ownerId AND f.follower = '%s' 
 				ORDER BY s.timestamp DESC""";

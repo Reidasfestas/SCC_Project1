@@ -1,6 +1,7 @@
 /home/bruno/Classes/SCC/SCC_Project1/scc2425-tukano/src/main/test/tukano/clients/rest/RestUsersClient.java
 /home/bruno/Classes/SCC/SCC_Project1/scc2425-tukano/src/main/java/tukano/impl/Token.java
 /home/bruno/Classes/SCC/SCC_Project1/scc2425-tukano/src/main/java/utils/JSON.java
+/home/bruno/Classes/SCC/SCC_Project1/scc2425-tukano/src/main/java/utils/Database.java
 /home/bruno/Classes/SCC/SCC_Project1/scc2425-tukano/src/main/java/utils/Queues.java
 /home/bruno/Classes/SCC/SCC_Project1/scc2425-tukano/src/main/java/tukano/impl/data/Likes.java
 /home/bruno/Classes/SCC/SCC_Project1/scc2425-tukano/src/main/java/tukano/impl/rest/RestShortsResource.java
@@ -19,7 +20,9 @@
 /home/bruno/Classes/SCC/SCC_Project1/scc2425-tukano/src/main/java/tukano/impl/rest/TukanoRestServer.java
 /home/bruno/Classes/SCC/SCC_Project1/scc2425-tukano/src/main/java/utils/DB.java
 /home/bruno/Classes/SCC/SCC_Project1/scc2425-tukano/src/main/java/tukano/api/User.java
+/home/bruno/Classes/SCC/SCC_Project1/scc2425-tukano/src/main/java/utils/HibernateDatabase.java
 /home/bruno/Classes/SCC/SCC_Project1/scc2425-tukano/src/main/java/tukano/api/Result.java
+/home/bruno/Classes/SCC/SCC_Project1/scc2425-tukano/src/main/java/tukano/api/ShortDAO.java
 /home/bruno/Classes/SCC/SCC_Project1/scc2425-tukano/src/main/java/tukano/impl/rest/RestBlobsResource.java
 /home/bruno/Classes/SCC/SCC_Project1/scc2425-tukano/src/main/java/tukano/impl/storage/BlobStorage.java
 /home/bruno/Classes/SCC/SCC_Project1/scc2425-tukano/src/main/java/utils/Sleep.java
@@ -29,7 +32,9 @@
 /home/bruno/Classes/SCC/SCC_Project1/scc2425-tukano/src/main/test/tukano/clients/rest/RestShortsClient.java
 /home/bruno/Classes/SCC/SCC_Project1/scc2425-tukano/src/main/java/tukano/impl/JavaUsers.java
 /home/bruno/Classes/SCC/SCC_Project1/scc2425-tukano/src/main/java/tukano/impl/JavaBlobs.java
+/home/bruno/Classes/SCC/SCC_Project1/scc2425-tukano/src/main/java/tukano/api/UserDAO.java
 /home/bruno/Classes/SCC/SCC_Project1/scc2425-tukano/src/main/java/utils/Props.java
+/home/bruno/Classes/SCC/SCC_Project1/scc2425-tukano/src/main/java/utils/CosmosDatabase.java
 /home/bruno/Classes/SCC/SCC_Project1/scc2425-tukano/src/main/java/tukano/api/Short.java
 /home/bruno/Classes/SCC/SCC_Project1/scc2425-tukano/src/main/java/tukano/api/Shorts.java
 /home/bruno/Classes/SCC/SCC_Project1/scc2425-tukano/src/main/java/tukano/api/rest/RestUsers.java
