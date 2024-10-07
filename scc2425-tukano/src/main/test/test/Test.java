@@ -63,7 +63,9 @@ public class Test {
 		
 		var token = blobUrl.getQuery().split("=")[1];
 		
-		blobs.upload(blobUrl.toString(), randomBytes( 100 ), token);
+		show(blobs.upload(blobUrl.toString(), randomBytes( 100 ), token));
+
+		show(blobs.download(blobId, token));
 
 		
 		var s2id = s2.value().getId();
@@ -85,11 +87,11 @@ public class Test {
 
 		show(shorts.getShort( s2id ));
 //
-//		
+//
 //		blobs.forEach( b -> {
 //			var r = b.download(blobId);
 //			System.out.println( Hex.of(Hash.sha256( bytes )) + "-->" + Hex.of(Hash.sha256( r.value() )));
-//			
+//
 //		});
 		
 		 show(users.deleteUser("wales", "12345"));

@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 import main.java.tukano.api.Blobs;
 import main.java.tukano.api.Result;
 import main.java.tukano.impl.rest.TukanoRestServer;
+import main.java.tukano.impl.storage.AzureBlobStorage;
 import main.java.tukano.impl.storage.BlobStorage;
 import main.java.tukano.impl.storage.FilesystemStorage;
 import main.java.utils.Hash;
@@ -18,7 +19,8 @@ import main.java.utils.Hex;
 public class JavaBlobs implements Blobs {
 	
 	private static Blobs instance;
-	private static Logger Log = Logger.getLogger(JavaBlobs.class.getName());
+	private static final Logger Log = Logger.getLogger(JavaBlobs.class.getName());
+	private static final boolean AZURE_STORAGE = true;
 
 	public String baseURI;
 	private BlobStorage storage;
@@ -30,7 +32,13 @@ public class JavaBlobs implements Blobs {
 	}
 	
 	private JavaBlobs() {
-		storage = new FilesystemStorage();
+		if(AZURE_STORAGE) {
+			storage = new AzureBlobStorage();
+		}
+		else {
+			storage = new FilesystemStorage();
+		}
+
 		baseURI = String.format("%s/%s/", TukanoRestServer.serverURI, Blobs.NAME);
 	}
 	

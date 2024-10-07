@@ -30,7 +30,7 @@ public class JavaShorts implements Shorts {
 	
 	private static Shorts instance;
 
-	private static final boolean COSMOS_DB = true;
+	private static final boolean COSMOS_DB = false;
 	private static final String CONTAINER_NAME = "shorts";
 	
 	synchronized public static Shorts getInstance() {

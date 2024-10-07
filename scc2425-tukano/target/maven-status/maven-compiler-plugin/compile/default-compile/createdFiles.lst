@@ -1,5 +1,6 @@
 main/java/utils/DB.class
 main/java/tukano/impl/rest/utils/CustomLoggingFilter.class
+main/java/tukano/impl/storage/AzureBlobStorage.class
 main/java/tukano/impl/rest/TukanoRestServer.class
 main/java/tukano/api/Result$ErrorCode.class
 main/java/utils/TryCatch.class
