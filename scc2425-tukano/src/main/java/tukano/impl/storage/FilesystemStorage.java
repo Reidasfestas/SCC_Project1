@@ -1,12 +1,12 @@
-package main.java.tukano.impl.storage;
+package tukano.impl.storage;
 
 
-import static main.java.tukano.api.Result.error;
-import static main.java.tukano.api.Result.ok;
-import static main.java.tukano.api.Result.ErrorCode.BAD_REQUEST;
-import static main.java.tukano.api.Result.ErrorCode.CONFLICT;
-import static main.java.tukano.api.Result.ErrorCode.INTERNAL_ERROR;
-import static main.java.tukano.api.Result.ErrorCode.NOT_FOUND;
+import static tukano.api.Result.error;
+import static tukano.api.Result.ok;
+import static tukano.api.Result.ErrorCode.BAD_REQUEST;
+import static tukano.api.Result.ErrorCode.CONFLICT;
+import static tukano.api.Result.ErrorCode.INTERNAL_ERROR;
+import static tukano.api.Result.ErrorCode.NOT_FOUND;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,9 +16,9 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.function.Consumer;
 
-import main.java.tukano.api.Result;
-import main.java.utils.Hash;
-import main.java.utils.IO;
+import tukano.api.Result;
+import utils.Hash;
+import utils.IO;
 
 public class FilesystemStorage implements BlobStorage {
 	private final String rootDir;

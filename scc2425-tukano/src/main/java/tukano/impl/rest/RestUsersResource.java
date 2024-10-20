@@ -1,12 +1,12 @@
-package main.java.tukano.impl.rest;
+package tukano.impl.rest;
 
 import java.util.List;
 
 import jakarta.inject.Singleton;
-import main.java.tukano.api.User;
-import main.java.tukano.api.Users;
-import main.java.tukano.api.rest.RestUsers;
-import main.java.tukano.impl.JavaUsers;
+import tukano.api.User;
+import tukano.api.Users;
+import tukano.api.rest.RestUsers;
+import tukano.impl.JavaUsers;
 
 @Singleton
 public class RestUsersResource extends RestResource implements RestUsers {

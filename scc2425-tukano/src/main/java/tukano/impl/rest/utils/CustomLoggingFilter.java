@@ -1,4 +1,4 @@
-package main.java.tukano.impl.rest.utils;
+package tukano.impl.rest.utils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

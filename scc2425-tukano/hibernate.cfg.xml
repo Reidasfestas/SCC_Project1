@@ -20,9 +20,9 @@
 		<property name="hibernate.dbcp.maxIdle">10</property>
 		<property name="hibernate.dbcp.minIdle">5</property>
 		<property name="hibernate.dbcp.maxWaitMillis">-1</property>
-		<mapping class="main.java.tukano.api.User" />
-		<mapping class="main.java.tukano.api.Short" />
-		<mapping class="main.java.tukano.impl.data.Following" />
-		<mapping class="main.java.tukano.impl.data.Likes" />
+		<mapping class="tukano.api.User" />
+		<mapping class="tukano.api.Short" />
+		<mapping class="tukano.impl.data.Following" />
+		<mapping class="tukano.impl.data.Likes" />
 	</session-factory>
 </hibernate-configuration>

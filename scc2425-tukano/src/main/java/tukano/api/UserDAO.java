@@ -1,4 +1,4 @@
-package main.java.tukano.api;
+package tukano.api;
 
 public class UserDAO extends User {
     private String _rid;

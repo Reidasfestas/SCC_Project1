@@ -1,10 +1,10 @@
-package main.test.tukano.clients.rest;
+package tukano.clients.rest;
 
 
-import static main.java.tukano.api.Result.error;
-import static main.java.tukano.api.Result.ok;
-import static main.java.tukano.api.Result.ErrorCode.INTERNAL_ERROR;
-import static main.java.tukano.api.Result.ErrorCode.TIMEOUT;
+import static tukano.api.Result.error;
+import static tukano.api.Result.ok;
+import static tukano.api.Result.ErrorCode.INTERNAL_ERROR;
+import static tukano.api.Result.ErrorCode.TIMEOUT;
 
 import java.util.function.Supplier;
 import java.util.logging.Logger;
@@ -19,8 +19,8 @@ import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.GenericType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
-import main.java.tukano.api.Result;
-import main.java.tukano.api.Result.ErrorCode;
+import tukano.api.Result;
+import tukano.api.Result.ErrorCode;
 import utils.Sleep;
 
 public class RestClient {

@@ -1,24 +1,24 @@
-package main.java.tukano.impl;
+package tukano.impl;
 
 import static java.lang.String.format;
-import static main.java.tukano.api.Result.error;
-import static main.java.tukano.api.Result.errorOrResult;
-import static main.java.tukano.api.Result.errorOrValue;
-import static main.java.tukano.api.Result.ok;
-import static main.java.tukano.api.Result.ErrorCode.BAD_REQUEST;
-import static main.java.tukano.api.Result.ErrorCode.FORBIDDEN;
+import static tukano.api.Result.error;
+import static tukano.api.Result.errorOrResult;
+import static tukano.api.Result.errorOrValue;
+import static tukano.api.Result.ok;
+import static tukano.api.Result.ErrorCode.BAD_REQUEST;
+import static tukano.api.Result.ErrorCode.FORBIDDEN;
 
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
-import main.java.tukano.api.Result;
-import main.java.tukano.api.User;
-import main.java.tukano.api.Users;
-import main.java.utils.DB;
+import tukano.api.Result;
+import tukano.api.User;
+import tukano.api.Users;
+import utils.DB;
 
 public class JavaUsers implements Users {
-	
+
 	private static Logger Log = Logger.getLogger(JavaUsers.class.getName());
 
 	private static Users instance;
@@ -31,7 +31,7 @@ public class JavaUsers implements Users {
 			instance = new JavaUsers();
 		return instance;
 	}
-	
+
 	private JavaUsers() {
 		if(COSMOS_DB) {
 			DB.configureCosmosDB();
@@ -41,15 +41,15 @@ public class JavaUsers implements Users {
 			DB.configureHibernateDB();
 		}
 	}
-	
+
 	@Override
 	public Result<String> createUser(User user) {
 		Log.info(() -> format("createUser : %s\n", user));
 
 		if( badUserInfo( user ) )
-				return error(BAD_REQUEST);
+			return error(BAD_REQUEST);
 
-		return errorOrValue( DB.insertOne( user), user.getId() );
+		return errorOrValue( DB.insertOne( user), user.getUserId() );
 	}
 
 	@Override
@@ -58,7 +58,7 @@ public class JavaUsers implements Users {
 
 		if (userId == null)
 			return error(BAD_REQUEST);
-		
+
 		return validatedUserOrError( DB.getOne( userId, User.class), pwd);
 	}
 
@@ -86,7 +86,7 @@ public class JavaUsers implements Users {
 				JavaShorts.getInstance().deleteAllShorts(userId, pwd, Token.get(userId));
 				JavaBlobs.getInstance().deleteAllBlobs(userId, Token.get(userId));
 			}).start();
-			
+
 			return DB.deleteOne( user);
 		});
 	}
@@ -95,7 +95,7 @@ public class JavaUsers implements Users {
 	public Result<List<User>> searchUsers(String pattern) {
 		Log.info( () -> format("searchUsers : patterns = %s\n", pattern));
 
-		var query = format("SELECT * FROM User u WHERE UPPER(u.id) LIKE '%%%s%%'", pattern.toUpperCase());
+		var query = format("SELECT * FROM User u WHERE UPPER(u.userId) LIKE '%%%s%%'", pattern.toUpperCase());
 		var hits = DB.sql(query, User.class)
 				.stream()
 				.map(User::copyWithoutPassword)
@@ -104,19 +104,19 @@ public class JavaUsers implements Users {
 		return ok(hits);
 	}
 
-	
+
 	private Result<User> validatedUserOrError( Result<User> res, String pwd ) {
 		if( res.isOK())
 			return res.value().getPwd().equals( pwd ) ? res : error(FORBIDDEN);
 		else
 			return res;
 	}
-	
+
 	private boolean badUserInfo( User user) {
 		return (user.userId() == null || user.pwd() == null || user.displayName() == null || user.email() == null);
 	}
-	
+
 	private boolean badUpdateUserInfo( String userId, String pwd, User info) {
-		return (userId == null || pwd == null || info.getId() != null && ! userId.equals( info.getId()));
+		return (userId == null || pwd == null || info.getUserId() != null && ! userId.equals( info.getUserId()));
 	}
 }

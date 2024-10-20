@@ -1,31 +1,33 @@
-package main.java.tukano.api;
+package tukano.api;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 
 @Entity
 public class User {
-	
+
 	@Id
-	private String id;
+	@JsonProperty("id")
+	private String userId;
 	private String pwd;
-	private String email;	
+	private String email;
 	private String displayName;
 
 	public User() {}
-	
-	public User(String id, String pwd, String email, String displayName) {
+
+	public User(String userId, String pwd, String email, String displayName) {
 		this.pwd = pwd;
 		this.email = email;
-		this.id = id;
+		this.userId = userId;
 		this.displayName = displayName;
 	}
 
-	public String getId() {
-		return id;
+	public String getUserId() {
+		return userId;
 	}
-	public void setId(String userId) {
-		this.id = userId;
+	public void setUserId(String userId) {
+		this.userId = userId;
 	}
 	public String getPwd() {
 		return pwd;
@@ -45,36 +47,36 @@ public class User {
 	public void setDisplayName(String displayName) {
 		this.displayName = displayName;
 	}
-	
+
 	public String userId() {
-		return id;
+		return userId;
 	}
-	
+
 	public String pwd() {
 		return pwd;
 	}
-	
+
 	public String email() {
 		return email;
 	}
-	
+
 	public String displayName() {
 		return displayName;
 	}
-	
+
 	@Override
 	public String toString() {
-		return "User [userId=" + id + ", pwd=" + pwd + ", email=" + email + ", displayName=" + displayName + "]";
+		return "User [userId=" + userId + ", pwd=" + pwd + ", email=" + email + ", displayName=" + displayName + "]";
 	}
-	
+
 	public User copyWithoutPassword() {
-		return new User(id, "", email, displayName);
+		return new User(userId, "", email, displayName);
 	}
-	
+
 	public User updateFrom( User other ) {
-		return new User(id,
+		return new User(userId,
 				other.pwd != null ? other.pwd : pwd,
-				other.email != null ? other.email : email, 
+				other.email != null ? other.email : email,
 				other.displayName != null ? other.displayName : displayName);
 	}
 }

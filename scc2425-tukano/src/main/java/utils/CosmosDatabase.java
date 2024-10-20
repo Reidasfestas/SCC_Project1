@@ -1,4 +1,4 @@
-package main.java.utils;
+package utils;
 
 import com.azure.cosmos.*;
 import com.azure.cosmos.models.*;
@@ -11,8 +11,8 @@ import java.util.function.Supplier;
 import java.util.logging.Logger;
 
 import com.azure.cosmos.util.CosmosPagedIterable;
-import main.java.tukano.api.Result;
-import main.java.tukano.impl.JavaUsers;
+import tukano.api.Result;
+import tukano.impl.JavaUsers;
 import org.hibernate.Session;
 
 public class CosmosDatabase implements Database {
@@ -78,6 +78,11 @@ public class CosmosDatabase implements Database {
     }
 
     @Override
+    public DbTypes getDbType() {
+        return DbTypes.COSMOS;
+    }
+
+    @Override
     public void configure(Database db) {
 
     }
@@ -100,17 +105,10 @@ public class CosmosDatabase implements Database {
         });
     }
 
-    public <T> List<T> sql(Class<T> clazz, String queryStr) {
-        return tryCatchList(() -> {
-            var res = container.queryItems(queryStr, new CosmosQueryRequestOptions(), clazz);
-            return res.stream().toList();
-        });
-    }
-
     @Override
     public <T> List<T> sql(Class<T> clazz, String fmt, Object... args) {
-        // Cosmos DB formatted query logic
-        return null; // Replace with actual implementation
+        var res = container.queryItems(String.format(fmt, args), new CosmosQueryRequestOptions(),clazz);
+        return res.stream().toList();
     }
 
     @Override

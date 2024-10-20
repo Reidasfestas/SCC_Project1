@@ -1,13 +1,18 @@
-package main.java.utils;
+package utils;
 
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import main.java.tukano.api.Result;
+import tukano.api.Result;
 import org.hibernate.Session;
 
 public class HibernateDatabase implements Database {
+
+    @Override
+    public DbTypes getDbType() {
+        return DbTypes.LOCAL;
+    }
 
     @Override
     public void configure(Database db) {

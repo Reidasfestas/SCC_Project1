@@ -1,6 +1,6 @@
-package main.java.utils;
+package utils;
 
-import main.java.tukano.api.Result;
+import tukano.api.Result;
 import org.hibernate.Session;
 
 import java.util.List;
