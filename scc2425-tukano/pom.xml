@@ -27,6 +27,20 @@
 				</configuration>
 			</plugin>
 			<plugin>
+				<groupId>org.apache.tomcat.maven</groupId>
+				<artifactId>tomcat7-maven-plugin</artifactId>
+				<version>2.1</version>
+
+				<configuration>
+					<url>http://maven:s3cret@127.0.0.1:8080/manager/text</url>
+					<server>tomcat-docker</server>
+					<username>maven</username>
+        			<password>s3cret</password>
+					<update>true</update>
+					<path>/tukano</path>
+				</configuration>
+			</plugin>
+			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
 				<configuration>
 					<archive/>
@@ -41,8 +55,8 @@
 				<version>2.13.0</version>
 			    <configuration>
 			        <schemaVersion>v2</schemaVersion>
-			        <resourceGroup>scc-tukano-60019-rg</resourceGroup>
-			        <appName>scc-tukano-60019-backend</appName>
+			        <resourceGroup>scc-backend-rg-60247</resourceGroup>
+			        <appName>scc-tukano-60019-60247</appName>
 			        <pricingTier>F1</pricingTier>
 			        <region>westeurope</region>
 			        <runtime>
