@@ -21,8 +21,8 @@ public class AzureBlobStorage implements BlobStorage{
 
     private final BlobContainerClient containerClient;
 
-    private String storageConnectionString = "DefaultEndpointsProtocol=https;AccountName=scc242560247;AccountKey=CWYc6txoRyzIEUshC29sp1b7LwRtFLmeEkLN5Sfaxj0GORAE/PaNgaO5tk9Cb6kMfIseQ2Y8Alf++AStPeSdFQ==;EndpointSuffix=core.windows.net";
-    private static final String BLOBS_CONTAINER_NAME = "images";
+    private String storageConnectionString = "DefaultEndpointsProtocol=https;AccountName=sto60019northeurope;AccountKey=1G1RVkUh3s9v1FsIquPhyQ8KfKF2CwiPZO05QVB/hMyBC/2RIOJB9CfkYPMyG0zSVBCHX97tzcCe+AStORME9w==;EndpointSuffix=core.windows.net";
+    private static final String BLOBS_CONTAINER_NAME = "shorts";
 
     public AzureBlobStorage() {
         containerClient = new BlobContainerClientBuilder()
