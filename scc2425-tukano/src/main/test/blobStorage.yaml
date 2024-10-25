@@ -1,0 +1,22 @@
+config:
+  target: http://127.0.0.1:8080/tukano/rest
+  processor: ./blobstest.js
+  phases:
+    - name: simple_blob_post
+      duration: 1
+      arrivalRate: 1
+scenarios:
+  - name: TuKanoRegister
+    flow:
+      - post:
+          url: /shorts/
+          headers:
+            Accept: application/json
+          beforeRequest: "createShort"
+          afterResponse: "processRegisterReply"
+      - post:
+          url: /blobs/
+          headers:
+            Content-Type: application/octet-stream
+          body: "{{ blobContent }}"
+          beforeRequest: "prepareBlobUpload"

@@ -23,7 +23,7 @@ public class JavaUsers implements Users {
 
 	private static Users instance;
 
-	private static final boolean COSMOS_DB = false;
+	private static final boolean COSMOS_DB = true;
 	private static final String CONTAINER_NAME = "users";
 
 	synchronized public static Users getInstance() {
