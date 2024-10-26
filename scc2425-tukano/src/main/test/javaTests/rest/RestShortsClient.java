@@ -1,4 +1,4 @@
-package tukano.clients.rest;
+package javaTests.rest;
 
 import java.util.List;
 

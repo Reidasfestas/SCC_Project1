@@ -3,11 +3,15 @@ const crypto = require('crypto');
 module.exports = {
     createShort,
     processRegisterReply,
-    prepareBlobUpload
+    prepareBlobUpload,
+    prepareBlobDownload,
+    preparelikePost,
+    preparelikeget,
+    prepareshortget
 }
 
-let token;
 let bloburl;
+let blobId;
 
 // Function to create a short
 async function createShort(requestParams, context, ee, next) {
@@ -23,6 +27,7 @@ function processRegisterReply(requestParams, response, context, ee, next) {
 
         if (responseBody.blobUrl) {
             bloburl = responseBody.blobUrl.split("/");
+            blobId = bloburl[2].split("?")[0];
             bloburl = bloburl[1] + "/" + bloburl[2]
         }
     }
@@ -36,9 +41,28 @@ async function prepareBlobUpload(requestParams, context, ee, next) {
 
     const blobContent = crypto.randomBytes(100);
     requestParams.body = blobContent;
+}
 
-    // Log for debugging
-    console.log('Uploading blob with blobId:', bloburl);
-    console.log('Blob content:', requestParams.body.toString());
+async function prepareBlobDownload(requestParams, context, ee, next) {
+
+    requestParams.url = `/${bloburl}`;
+}
+
+async function preparelikePost(requestParams, context, ee, next) {
+
+    requestParams.url = `/shorts/${blobId}/liskov/likes?pwd=54321`;
+
+}
+
+async function preparelikeget(requestParams, context, ee, next) {
+
+    requestParams.url = `/shorts/${blobId}/likes?pwd=54321`;
+
+}
+
+async function prepareshortget(requestParams, context, ee, next) {
+
+    requestParams.url = `/shorts/${blobId}`;
+
 }
 

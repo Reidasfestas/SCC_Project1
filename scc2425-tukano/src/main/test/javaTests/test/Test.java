@@ -1,4 +1,4 @@
-package test;
+package javaTests.test;
 
 import java.io.File;
 import java.net.URI;
@@ -9,9 +9,9 @@ import tukano.api.Result;
 import tukano.api.Short;
 import tukano.api.User;
 import tukano.impl.rest.TukanoRestServer;
-import tukano.clients.rest.RestBlobsClient;
-import tukano.clients.rest.RestShortsClient;
-import tukano.clients.rest.RestUsersClient;
+import javaTests.rest.RestBlobsClient;
+import javaTests.rest.RestShortsClient;
+import javaTests.rest.RestUsersClient;
 
 public class Test {
 

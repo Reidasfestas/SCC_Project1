@@ -1,0 +1,59 @@
+config:
+  target: http://127.0.0.1:8080/tukano/rest
+  processor: ./shortsTest.js
+  phases:
+    - name: simple_blob_post
+      duration: 1
+      arrivalRate: 1
+scenarios:
+  - name: TuKanoRegister
+    flow:
+      - post:
+          url: /shorts/liskov?pwd=54321
+          headers:
+            Accept: application/json
+      - post:
+          url: /shorts/wales?pwd=12345
+          headers:
+            Accept: application/json
+          afterResponse: "processRegisterReply"
+      - post:
+          url: /blobs/
+          headers:
+            Content-Type: application/octet-stream
+          body: "{{ blobContent }}"
+          beforeRequest: "prepareBlobUpload"
+      - get:
+          url: /blobs/
+          headers:
+            accept: application/octet-stream
+          beforeRequest: "prepareBlobDownload"
+      - post:
+          url: /shorts/liskov/wales/followers?pwd=54321
+          headers:
+            content-type: application/json
+          body: "true"
+      - get:
+          url: /shorts/wales/followers?pwd=12345
+          headers:
+            Accept: application/json
+      - post:
+          url: /shorts/
+          headers:
+            content-type: application/json
+          body: "true"
+          beforeRequest: "preparelikePost"
+      - get:
+          url: /shorts/
+          headers:
+            Accept: application/json
+          beforeRequest: "preparelikeGet"
+      - get:
+          url: /shorts/liskov/feed?pwd=12345
+          headers:
+            Accept: application/json
+      - get:
+          url: /shorts/
+          headers:
+            Accept: application/json
+          beforeRequest: "prepareshortGet"

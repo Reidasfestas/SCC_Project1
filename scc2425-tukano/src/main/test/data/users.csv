@@ -1,11 +1,4 @@
 id,pwd,email,displayName
 jdoe,password123,j.doe@example.com,"John Doe"
-asmith,P@ssw0rd,asmith@example.com,"Alice Smith"
-bmiller,abc12345,bmiller@example.com,"Bob Miller"
-cjones,mysecretpass,cjones@example.com,"Charlie Jones"
-knguyen,passwordXyz,knguyen@example.com,"Kim Nguyen"
-rwalker,letmein123,rwalker@example.com,"Rob Walker"
-mroberts,!secure,mroberts@example.com,"Mary Roberts"
-tmartin123,@tmartin.com,tmartin@example.com,"Tom Martin"
-lsanchez,$pw321,lsanchez@example.com,"Luis Sanchez"
-ajackson,!ajack@com,ajackson@example.com,"Anna Jackson"
+wales,12345,jimmy@wikipedia.pt,"Jimmy Wales"
+liskov,54321,liskov@mit.edu,"Barbara Liskov"
