@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import redis.clients.jedis.Jedis;
 import tukano.api.Blobs;
 import tukano.api.Result;
 import tukano.api.Short;
@@ -23,6 +25,8 @@ import tukano.impl.data.Following;
 import tukano.impl.data.Likes;
 import tukano.impl.rest.TukanoRestServer;
 import utils.DB;
+import utils.JSON;
+import utils.RedisCache;
 
 public class JavaShorts implements Shorts {
 
@@ -32,6 +36,11 @@ public class JavaShorts implements Shorts {
 
 	private static final boolean COSMOS_DB = false;
 	private static final String CONTAINER_NAME = "shorts";
+
+	private static final boolean REDISCACHE = false;
+	private static Jedis jedis;
+	private static final String MOST_RECENT_SHRTS_LIST = "MostRecentShrts";
+	private static final int MAX_CACHED_SHRTS = 10;
 
 	synchronized public static Shorts getInstance() {
 		if( instance == null )
@@ -47,6 +56,8 @@ public class JavaShorts implements Shorts {
 		else {
 			DB.configureHibernateDB();
 		}
+		if (REDISCACHE)
+			jedis = RedisCache.getCachePool().getResource();
 	}
 
 
@@ -60,7 +71,13 @@ public class JavaShorts implements Shorts {
 			var blobUrl = format("%s/%s/%s", TukanoRestServer.serverURI, Blobs.NAME, shortId);
 			var shrt = new Short(shortId, userId, blobUrl);
 
-			return errorOrValue(DB.insertOne(shrt), s -> s.copyWithLikes_And_Token(0));
+			var res = DB.insertOne(shrt);
+			if (REDISCACHE) {
+				if (res.isOK())
+					cacheShrt(res.value().getShortId(), JSON.encode(res.value()));
+			}
+
+			return errorOrValue(res, s -> s.copyWithLikes_And_Token(0));
 		});
 	}
 
@@ -71,8 +88,22 @@ public class JavaShorts implements Shorts {
 		if( shortId == null )
 			return error(BAD_REQUEST);
 
+		//TODO: handle LikeCount with cache
 		var query = format("SELECT count(*) FROM Likes l WHERE l.shortId = '%s'", shortId);
 		var likes = DB.sql(query, Long.class);
+
+		if(REDISCACHE) {
+			var shrtRes = JSON.decode( jedis.get("shrt:" + shortId), Short.class);
+			if (shrtRes != null)
+				return  errorOrValue( Result.ok(shrtRes), shrt -> shrt.copyWithLikes_And_Token( likes.get(0)));
+
+			var res = DB.getOne(shortId, Short.class);
+			if (res.isOK()) {
+				cacheShrt(res.value().getShortId(), JSON.encode(res.value()));
+			}
+			return errorOrValue(res, shrt -> shrt.copyWithLikes_And_Token( likes.get(0)));
+		}
+
 		return errorOrValue( getOne(shortId, Short.class), shrt -> shrt.copyWithLikes_And_Token( likes.get(0)));
 	}
 
@@ -91,7 +122,9 @@ public class JavaShorts implements Shorts {
 					var query = format("DELETE Likes l WHERE l.shortId = '%s'", shortId);
 					hibernate.createNativeQuery( query, Likes.class).executeUpdate();
 
-					JavaBlobs.getInstance().delete(shrt.getBlobUrl(), Token.get() );
+					var res = JavaBlobs.getInstance().delete(shrt.getBlobUrl(), Token.get() );
+					if (REDISCACHE && res.isOK())
+						deleteCachedShrt(shortId, JSON.encode(res.value()));
 				});
 			});
 		});
@@ -101,8 +134,19 @@ public class JavaShorts implements Shorts {
 	public Result<List<String>> getShorts(String userId) {
 		Log.info(() -> format("getShorts : userId = %s\n", userId));
 
+		if (REDISCACHE) {
+			var cachedHits = jedis.get("getShorts:" + userId);
+			if (cachedHits != null) {
+				List<String> res = JSON.decode(cachedHits, new TypeReference<>() {});
+				return ok(res);
+			}
+		}
+
 		var query = format("SELECT s.shortId FROM Short s WHERE s.ownerId = '%s'", userId);
-		return errorOrValue( okUser(userId), DB.sql( query, String.class));
+		var hits = errorOrValue( okUser(userId), DB.sql( query, String.class));
+		if (REDISCACHE)
+			jedis.setex("getShorts:" + userId, 60, JSON.encode(hits));
+		return hits;
 	}
 
 	@Override
@@ -196,6 +240,25 @@ public class JavaShorts implements Shorts {
 			hibernate.createQuery(query3, Likes.class).executeUpdate();
 
 		});
+	}
+
+	private void cacheShrt(String shortId, String value) {
+		jedis.set("shrt:" + shortId, value);
+
+		jedis.lpush(MOST_RECENT_SHRTS_LIST, value );
+
+		var toTrim = jedis.lrange(MOST_RECENT_SHRTS_LIST, MAX_CACHED_SHRTS, -1);
+		if (!toTrim.isEmpty()) {
+			jedis.ltrim(MOST_RECENT_SHRTS_LIST, 0, MAX_CACHED_SHRTS - 1);
+
+			jedis.del("shrt:" + JSON.decode(toTrim.get(0), User.class).getUserId());
+		}
+	}
+
+	private void deleteCachedShrt(String shortId, String value) {
+		jedis.del("shrt:" + shortId);
+
+		jedis.lrem(MOST_RECENT_SHRTS_LIST, 0, value);
 	}
 
 }
