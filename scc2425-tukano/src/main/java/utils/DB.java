@@ -19,8 +19,8 @@ public class DB {
 		database = new HibernateDatabase();
 	}
 
-	public static void configureCosmosDB() {
-		database = CosmosDatabase.getInstance();
+	public static void configureNoSQLCosmosDB() {
+		database = NoSQLDatabase.getInstance();
 	}
 
 	public static void changeContainerName(String containerName) {

@@ -10,27 +10,25 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
 
-import com.azure.cosmos.util.CosmosPagedIterable;
 import tukano.api.Result;
-import tukano.impl.JavaUsers;
 import org.hibernate.Session;
 
-public class CosmosDatabase implements Database {
+public class NoSQLDatabase implements Database {
 
-    private static Logger Log = Logger.getLogger(CosmosDatabase.class.getName());
+    private static Logger Log = Logger.getLogger(NoSQLDatabase.class.getName());
 
     private static final String CONNECTION_URL = "https://scctukano.documents.azure.com:443/"; // replace with your own
     private static final String DB_KEY = "T7CooQgU0rD2TggSDmUH7X5FjFLFJwdq6RyEi7bv491rw64MFaBVw8TweKwXEXBpMmpe1Ej93mYdACDbNchRvQ==";
     private static final String DB_NAME = "scctukano";
     private String CONTAINER = "users";
 
-    private static CosmosDatabase instance;
+    private static NoSQLDatabase instance;
 
     private CosmosClient client;
     private com.azure.cosmos.CosmosDatabase db;
     private CosmosContainer container;
 
-    public static synchronized CosmosDatabase getInstance() {
+    public static synchronized NoSQLDatabase getInstance() {
         if( instance != null)
             return instance;
 
@@ -44,7 +42,7 @@ public class CosmosDatabase implements Database {
                 .connectionSharingAcrossClientsEnabled(true)
                 .contentResponseOnWriteEnabled(true)
                 .buildClient();
-        instance = new CosmosDatabase(client);
+        instance = new NoSQLDatabase(client);
         return instance;
 
     }
@@ -58,7 +56,7 @@ public class CosmosDatabase implements Database {
 //        this.container = client.getDatabase(databaseName).getContainer(containerName);
 //    }
 
-    public CosmosDatabase(CosmosClient client) {
+    public NoSQLDatabase(CosmosClient client) {
         this.client = client;
     }
 

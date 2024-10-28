@@ -42,7 +42,7 @@ public class JavaUsers implements Users {
 
 	private JavaUsers() {
 		if(COSMOS_DB) {
-			DB.configureCosmosDB();
+			DB.configureNoSQLCosmosDB();
 			DB.changeContainerName(CONTAINER_NAME);
 		}
 		else {

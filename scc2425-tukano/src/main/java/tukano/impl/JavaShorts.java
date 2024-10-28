@@ -51,7 +51,7 @@ public class JavaShorts implements Shorts {
 
 	private JavaShorts() {
 		if(COSMOS_DB) {
-			DB.configureCosmosDB();
+			DB.configureNoSQLCosmosDB();
 			DB.changeContainerName(CONTAINER_NAME);
 		}
 		else {
