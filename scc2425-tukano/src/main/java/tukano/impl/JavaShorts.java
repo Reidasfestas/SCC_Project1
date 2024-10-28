@@ -40,6 +40,7 @@ public class JavaShorts implements Shorts {
 	private static final boolean REDISCACHE = false;
 	private static Jedis jedis;
 	private static final String MOST_RECENT_SHRTS_LIST = "MostRecentShrts";
+	private static final String LIKES_PREFIX = "likes:";
 	private static final int MAX_CACHED_SHRTS = 10;
 
 	synchronized public static Shorts getInstance() {
@@ -91,13 +92,7 @@ public class JavaShorts implements Shorts {
 		List<Long> likes;
 
 		if (REDISCACHE) {
-			String likeCountKey = "likeCount:" + shortId;
-			if (jedis.exists(likeCountKey))
-				 likes = List.of(Long.valueOf(jedis.get(likeCountKey)));
-			else {
-				var query = format("SELECT count(*) FROM Likes l WHERE l.shortId = '%s'", shortId);
-				likes = DB.sql(query, Long.class);
-			}
+			likes = List.of((long) getLikeCount(LIKES_PREFIX + shortId));
 
 			var shrtRes = JSON.decode( jedis.get("shrt:" + shortId), Short.class);
 			if (shrtRes != null)
@@ -135,7 +130,7 @@ public class JavaShorts implements Shorts {
 					if (REDISCACHE && res.isOK()) {
 						deleteCachedShrt(shortId, JSON.encode(res.value()));
 
-						jedis.del("likeCount:" + shortId);
+						jedis.del(LIKES_PREFIX + shortId);
 					}
 				});
 			});
@@ -190,11 +185,14 @@ public class JavaShorts implements Shorts {
 
 			var res = errorOrVoid( okUser( userId, password), isLiked ? DB.insertOne( l ) : DB.deleteOne( l ));
 
-			if (res.isOK()) {
-				if (isLiked)
-					updateLikeCount(shrt.getShortId(), 1);
-				else
-					updateLikeCount(shrt.getShortId(), -1);
+
+			if (REDISCACHE) {
+				if (res.isOK()) {
+					if (isLiked)
+						jedis.incr(LIKES_PREFIX + shortId);
+					else if(jedis.get(LIKES_PREFIX + shortId) != null)
+						jedis.decr(LIKES_PREFIX + shortId);
+				}
 			}
 
             return res;
@@ -208,9 +206,9 @@ public class JavaShorts implements Shorts {
 		return errorOrResult( getShort(shortId), shrt -> {
 
 			if (REDISCACHE) {
-				String likeCountKey = "likeCount:" + shortId;
-				if (jedis.exists(likeCountKey))
-					return ok(List.of(jedis.get(likeCountKey)));
+				var likes = List.of(String.valueOf(getLikeCount(LIKES_PREFIX + shortId)));
+
+				return  errorOrValue(okUser( shrt.getOwnerId(), password ), likes);
 			}
 
 			var query = format("SELECT l.userId FROM Likes l WHERE l.shortId = '%s'", shortId);
@@ -224,11 +222,11 @@ public class JavaShorts implements Shorts {
 		Log.info(() -> format("getFeed : userId = %s, pwd = %s\n", userId, password));
 
 		final var QUERY_FMT = """
-				SELECT s.shortId, s.timestamp FROM Short s WHERE	s.ownerId = '%s'				
-				UNION			
-				SELECT s.shortId, s.timestamp FROM Short s, Following f 
-					WHERE 
-						f.followee = s.ownerId AND f.follower = '%s' 
+				SELECT s.shortId, s.timestamp FROM Short s WHERE	s.ownerId = '%s'
+				UNION
+				SELECT s.shortId, s.timestamp FROM Short s, Following f
+					WHERE
+						f.followee = s.ownerId AND f.follower = '%s'
 				ORDER BY s.timestamp DESC""";
 
 		return errorOrValue( okUser( userId, password), DB.sql( format(QUERY_FMT, userId, userId), String.class));
@@ -289,15 +287,9 @@ public class JavaShorts implements Shorts {
 		jedis.lrem(MOST_RECENT_SHRTS_LIST, 0, value);
 	}
 
-	//TODO: always have the likeCount on cache?
-	private void updateLikeCount(String shortId, int change) {
-		String likeCountKey = "likeCount:" + shortId;
-
-		int currentCount = jedis.exists(likeCountKey) ? Integer.parseInt((jedis.get(likeCountKey))) : 0;
-
-		currentCount += change;
-
-		jedis.set(likeCountKey, String.valueOf(currentCount));
+	private int getLikeCount(String shortId) {
+		String count = jedis.get(LIKES_PREFIX + shortId);
+		return count != null ? Integer.parseInt(count) : 0;
 	}
 
 }
