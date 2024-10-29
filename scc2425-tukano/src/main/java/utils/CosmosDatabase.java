@@ -20,9 +20,9 @@ public class CosmosDatabase implements Database {
     private static Logger Log = Logger.getLogger(CosmosDatabase.class.getName());
 
     private static final String CONNECTION_URL = "https://cosmos60019.documents.azure.com:443/"; // replace with your own
-    private static final String DB_KEY = "fzVoSc1RBVllqQvxkTMPNGNsFiMT1xDzWlRjPN8deO7qPwhQmtZgftlZ0fQ0F9aUqsmJNCCobmS2ACDbLzI2Cg==";
+    private static final String DB_KEY = "93uOJS9hdqnvdRHVJA4yyXEBY3SUv2LUSRBCyldRcQeQRrME1ECv0BQ7EWtkhv4RAgH1Tx8LpD7cACDboOyh4w==";
     private static final String DB_NAME = "cosmosdb60019";
-    private String CONTAINER = "users";
+    private String CONTAINER;
 
     private static CosmosDatabase instance;
 
