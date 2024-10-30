@@ -25,7 +25,7 @@ public class TukanoMainApplication extends Application
 		resources.add(RestUsersResource.class);
 		resources.add(RestShortsResource.class);
 
-		//Token.setSecret("blabla");
+		Token.setSecret("token");
 
 		Log.info(String.format("Tukano Server ready @ %s\n",  serverURI));
 	}
