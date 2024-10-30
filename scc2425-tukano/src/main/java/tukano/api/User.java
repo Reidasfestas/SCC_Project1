@@ -1,5 +1,6 @@
 package tukano.api;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -8,6 +9,7 @@ import jakarta.persistence.Id;
 public class User {
 	@Id
 	@JsonProperty("id")
+	@JsonAlias("userId")
 	private String userId;
 	private String pwd;
 	private String email;

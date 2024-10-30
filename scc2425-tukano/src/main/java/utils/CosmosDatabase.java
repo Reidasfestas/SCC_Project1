@@ -4,7 +4,9 @@ import com.azure.cosmos.*;
 import com.azure.cosmos.models.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -12,8 +14,12 @@ import java.util.logging.Logger;
 
 import com.azure.cosmos.util.CosmosPagedIterable;
 import tukano.api.Result;
+import tukano.api.Short;
+import tukano.api.User;
 import tukano.impl.JavaUsers;
 import org.hibernate.Session;
+import tukano.impl.data.Following;
+import tukano.impl.data.Likes;
 
 public class CosmosDatabase implements Database {
 
@@ -23,6 +29,8 @@ public class CosmosDatabase implements Database {
     private static final String DB_KEY = "93uOJS9hdqnvdRHVJA4yyXEBY3SUv2LUSRBCyldRcQeQRrME1ECv0BQ7EWtkhv4RAgH1Tx8LpD7cACDboOyh4w==";
     private static final String DB_NAME = "cosmosdb60019";
     private String CONTAINER;
+
+    private Map<Class<?>, CosmosContainer> containerMap = new HashMap<>();
 
     private static CosmosDatabase instance;
 
@@ -49,20 +57,6 @@ public class CosmosDatabase implements Database {
 
     }
 
-    public CosmosDatabase() {
-        client = new CosmosClientBuilder()
-                .endpoint(CONNECTION_URL)
-                .key(DB_KEY)
-                //.directMode()
-                .gatewayMode()
-                // replace by .directMode() for better performance
-                .consistencyLevel(ConsistencyLevel.SESSION)
-                .connectionSharingAcrossClientsEnabled(true)
-                .contentResponseOnWriteEnabled(true)
-                .buildClient();
-        instance = new CosmosDatabase(client);
-    }
-
     public CosmosDatabase(CosmosClient client) {
         this.client = client;
     }
@@ -75,7 +69,10 @@ public class CosmosDatabase implements Database {
         if( db != null)
             return;
         db = client.getDatabase(DB_NAME);
-        container = db.getContainer(CONTAINER);
+        containerMap.put(User.class, db.getContainer("users"));
+        containerMap.put(Short.class, db.getContainer("shorts"));
+        containerMap.put(Likes.class, db.getContainer("likes"));
+        containerMap.put(Following.class, db.getContainer("followings"));
     }
 
     public void close() {
@@ -105,6 +102,10 @@ public class CosmosDatabase implements Database {
     @Override
     public <T> List<T> sql(String query, Class<T> clazz) {
         return tryCatchList(() -> {
+            container = containerMap.get(clazz);
+            if (container == null) {
+                Log.info("No container found for class: " + clazz);
+            }
             var res = container.queryItems(query, new CosmosQueryRequestOptions(), clazz);
             return res.stream().toList();
         });
@@ -112,18 +113,30 @@ public class CosmosDatabase implements Database {
 
     @Override
     public <T> List<T> sql(Class<T> clazz, String fmt, Object... args) {
+        container = containerMap.get(clazz);
+        if (container == null) {
+            Log.info("No container found for class: " + clazz);
+        }
         var res = container.queryItems(String.format(fmt, args), new CosmosQueryRequestOptions(),clazz);
         return res.stream().toList();
     }
 
     @Override
     public <T> Result<T> getOne(String id, Class<T> clazz) {
+        container = containerMap.get(clazz);
+        if (container == null) {
+            Log.info("No container found for class: " + clazz);
+        }
         return tryCatch( () -> container.readItem(id, new PartitionKey(id), clazz).getItem());
     }
 
     @Override
-    public <T> Result<T> deleteOne(T obj) {
+    public <T> Result<T> deleteOne(T obj, Class<T> clazz) {
         return tryCatch(() -> {
+            container = containerMap.get(clazz);
+            if (container == null) {
+                Log.info("No container found for class: " + clazz);
+            }
             // Perform the delete operation on the Cosmos DB container
             container.deleteItem(obj, new CosmosItemRequestOptions());
             // Return the deleted object as part of the Result
@@ -132,13 +145,21 @@ public class CosmosDatabase implements Database {
     }
 
     @Override
-    public <T> Result<T> updateOne(T obj) {
+    public <T> Result<T> updateOne(T obj, Class<T> clazz) {
+        container = containerMap.get(clazz);
+        if (container == null) {
+            Log.info("No container found for class: " + clazz);
+        }
         return tryCatch( () -> container.upsertItem(obj).getItem());
     }
 
     @Override
-    public <T> Result<T> insertOne(T obj) {
+    public <T> Result<T> insertOne(T obj, Class<T> clazz) {
         //Log.info(("Trying to create item: " + obj));
+        container = containerMap.get(clazz);
+        if (container == null) {
+            Log.info("No container found for class: " + clazz);
+        }
         return tryCatch( () -> container.createItem(obj).getItem());
     }
 

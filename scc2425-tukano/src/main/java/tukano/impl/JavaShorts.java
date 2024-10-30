@@ -33,7 +33,7 @@ public class JavaShorts implements Shorts {
 
 	private static final boolean COSMOS_DB = true;
 	private static final String CONTAINER_NAME = "shorts";
-	private static DB db;
+	//private static DB db;
 
 	synchronized public static Shorts getInstance() {
 		if( instance == null )
@@ -42,13 +42,13 @@ public class JavaShorts implements Shorts {
 	}
 
 	private JavaShorts() {
-		db = new DB();
+		//db = new DB();
 		if(COSMOS_DB) {
-			db.configureCosmosDB();
-			db.changeContainerName(CONTAINER_NAME);
+			DB.configureCosmosDB();
+			//db.changeContainerName(CONTAINER_NAME);
 		}
 		else {
-			db.configureHibernateDB();
+			DB.configureHibernateDB();
 		}
 	}
 
@@ -65,7 +65,7 @@ public class JavaShorts implements Shorts {
 			else blobUrl = format("%s/%s/%s", TukanoRestServer.serverURI, Blobs.NAME, shortId);
 			var shrt = new Short(shortId, userId, blobUrl);
 
-			return errorOrValue(db.insertOne(shrt), s -> s.copyWithLikes_And_Token(0));
+			return errorOrValue(DB.insertOne(shrt, Short.class), s -> s.copyWithLikes_And_Token(0));
 		});
 	}
 
@@ -77,11 +77,11 @@ public class JavaShorts implements Shorts {
 			return error(BAD_REQUEST);
 
 		var query = format("SELECT count(*) FROM Likes l WHERE l.shortId = '%s'", shortId);
-		var likes = db.sql(query, Long.class);
+		var likes = DB.sql(query, Long.class);
 
 		long likeCount = (!likes.isEmpty() && likes.get(0) != null) ? likes.get(0) : 0L;
 
-		return errorOrValue( db.getOne(shortId, Short.class), shrt -> shrt.copyWithLikes_And_Token( likeCount ));
+		return errorOrValue( DB.getOne(shortId, Short.class), shrt -> shrt.copyWithLikes_And_Token( likeCount ));
 	}
 
 
@@ -92,7 +92,7 @@ public class JavaShorts implements Shorts {
 		return errorOrResult( getShort(shortId), shrt -> {
 
 			return errorOrResult( okUser( shrt.getOwnerId(), password), user -> {
-				return db.transaction( hibernate -> {
+				return DB.transaction( hibernate -> {
 
 					hibernate.remove( shrt);
 
@@ -110,7 +110,7 @@ public class JavaShorts implements Shorts {
 		Log.info(() -> format("getShorts : userId = %s\n", userId));
 
 		var query = format("SELECT s.id FROM Short s WHERE s.ownerId = '%s'", userId);
-		return errorOrValue( okUser(userId), db.sql( query, String.class));
+		return errorOrValue( okUser(userId), DB.sql( query, String.class));
 	}
 
 	@Override
@@ -120,7 +120,7 @@ public class JavaShorts implements Shorts {
 
 		return errorOrResult( okUser(userId1, password), user -> {
 			var f = new Following(userId1, userId2);
-			return errorOrVoid( okUser( userId2), isFollowing ? db.insertOne( f ) : db.deleteOne( f ));
+			return errorOrVoid( okUser( userId2), isFollowing ? DB.insertOne( f, Following.class ) : DB.deleteOne( f, Following.class ));
 		});
 	}
 
@@ -129,7 +129,7 @@ public class JavaShorts implements Shorts {
 		Log.info(() -> format("followers : userId = %s, pwd = %s\n", userId, password));
 
 		var query = format("SELECT f.follower FROM Following f WHERE f.followee = '%s'", userId);
-		return errorOrValue( okUser(userId, password), db.sql(query, String.class));
+		return errorOrValue( okUser(userId, password), DB.sql(query, String.class));
 	}
 
 	@Override
@@ -139,7 +139,7 @@ public class JavaShorts implements Shorts {
 
 		return errorOrResult( getShort(shortId), shrt -> {
 			var l = new Likes(userId, shortId, shrt.getOwnerId());
-			return errorOrVoid( okUser( userId, password), isLiked ? db.insertOne( l ) : db.deleteOne( l ));
+			return errorOrVoid( okUser( userId, password), isLiked ? DB.insertOne( l, Likes.class ) : DB.deleteOne( l, Likes.class ));
 		});
 	}
 
@@ -151,7 +151,7 @@ public class JavaShorts implements Shorts {
 
 			var query = format("SELECT l.userId FROM Likes l WHERE l.shortId = '%s'", shortId);
 
-			return errorOrValue( okUser( shrt.getOwnerId(), password ), db.sql(query, String.class));
+			return errorOrValue( okUser( shrt.getOwnerId(), password ), DB.sql(query, String.class));
 		});
 	}
 
@@ -167,7 +167,7 @@ public class JavaShorts implements Shorts {
 						f.followee = s.ownerId AND f.follower = '%s' 
 				ORDER BY s.timestamp DESC""";
 
-		return errorOrValue( okUser( userId, password), db.sql( format(QUERY_FMT, userId, userId), String.class));
+		return errorOrValue( okUser( userId, password), DB.sql( format(QUERY_FMT, userId, userId), String.class));
 	}
 
 	protected Result<User> okUser( String userId, String pwd) {
@@ -189,7 +189,7 @@ public class JavaShorts implements Shorts {
 		if( ! Token.isValid( token, userId ) )
 			return error(FORBIDDEN);
 
-		return db.transaction( (hibernate) -> {
+		return DB.transaction( (hibernate) -> {
 
 			//delete shorts
 			var query1 = format("DELETE Short s WHERE s.ownerId = '%s'", userId);

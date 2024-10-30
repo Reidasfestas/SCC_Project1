@@ -18,9 +18,9 @@ public interface Database {
     <T> List<T> sql(String query, Class<T> clazz);
     <T> List<T> sql(Class<T> clazz, String fmt, Object... args);
     <T> Result<T> getOne(String id, Class<T> clazz);
-    <T> Result<T> deleteOne(T obj);
-    <T> Result<T> updateOne(T obj);
-    <T> Result<T> insertOne(T obj);
+    <T> Result<T> deleteOne(T obj, Class<T> clazz);
+    <T> Result<T> updateOne(T obj, Class<T> clazz);
+    <T> Result<T> insertOne(T obj, Class<T> clazz);
     <T> Result<T> transaction(Consumer<Session> c);
     <T> Result<T> transaction(Function<Session, Result<T>> func);
 }

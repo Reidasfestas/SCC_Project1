@@ -9,57 +9,49 @@ import java.util.function.Function;
 
 public class DB {
 
-	public DB() {
+	private static Database database;
 
-	}
-
-	private Database database;
-
-	public void configure(Database db) {
+	public static void configure(Database db) {
 		database = db;
 	}
 
-	public void configureHibernateDB() {
+	public static void configureHibernateDB() {
 		database = new HibernateDatabase();
 	}
 
-	public void configureCosmosDB() {
-		database = new CosmosDatabase();
+	public static void configureCosmosDB() {
+		database = CosmosDatabase.getInstance();
 	}
 
-	public void changeContainerName(String containerName) {
-		database.changeContainer(containerName);
-	}
-
-	public <T> List<T> sql(String query, Class<T> clazz) {
+	public static <T> List<T> sql(String query, Class<T> clazz) {
 		return database.sql(query, clazz);
 	}
 
-	public <T> List<T> sql(Class<T> clazz, String fmt, Object... args) {
+	public static <T> List<T> sql(Class<T> clazz, String fmt, Object... args) {
 		return database.sql(clazz, fmt, args);
 	}
 
-	public <T> Result<T> getOne(String id, Class<T> clazz) {
+	public static <T> Result<T> getOne(String id, Class<T> clazz) {
 		return database.getOne(id, clazz);
 	}
 
-	public <T> Result<T> deleteOne(T obj) {
-		return database.deleteOne(obj);
+	public static <T> Result<T> deleteOne(T obj, Class<T> clazz) {
+		return database.deleteOne(obj, clazz);
 	}
 
-	public <T> Result<T> updateOne(T obj) {
-		return database.updateOne(obj);
+	public static <T> Result<T> updateOne(T obj, Class<T> clazz) {
+		return database.updateOne(obj, clazz);
 	}
 
-	public <T> Result<T> insertOne(T obj) {
-		return database.insertOne(obj);
+	public static <T> Result<T> insertOne(T obj, Class<T> clazz) {
+		return database.insertOne(obj, clazz);
 	}
 
-	public <T> Result<T> transaction(Consumer<Session> c) {
+	public static <T> Result<T> transaction(Consumer<Session> c) {
 		return database.transaction(c);
 	}
 
-	public <T> Result<T> transaction(Function<Session, Result<T>> func) {
+	public static <T> Result<T> transaction(Function<Session, Result<T>> func) {
 		return database.transaction(func);
 	}
 }

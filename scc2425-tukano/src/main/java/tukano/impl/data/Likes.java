@@ -2,11 +2,16 @@ package tukano.impl.data;
 
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 
 @Entity
 public class Likes {
+
+	@Id
+	@JsonProperty("id")
+	String id;
 	
 	@Id 
 	String userId;

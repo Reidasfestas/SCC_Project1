@@ -24,8 +24,8 @@ public class JavaUsers implements Users {
 	private static Users instance;
 
 	private static final boolean COSMOS_DB = true;
-	private static final String CONTAINER_NAME = "users";
-	private static DB db;
+	private static final String USERS_CONTAINER = "users";
+	//private static DB db;
 
 	synchronized public static Users getInstance() {
 		if( instance == null )
@@ -34,13 +34,15 @@ public class JavaUsers implements Users {
 	}
 
 	private JavaUsers() {
-		db = new DB();
+		//db = new DB();
 		if(COSMOS_DB) {
-			db.configureCosmosDB();
-			db.changeContainerName(CONTAINER_NAME);
+//			db.configureCosmosDB();
+//			db.changeContainerName(CONTAINER_NAME);
+			DB.configureCosmosDB();
 		}
 		else {
-			db.configureHibernateDB();
+//			db.configureHibernateDB();
+			DB.configureHibernateDB();
 		}
 	}
 
@@ -50,8 +52,7 @@ public class JavaUsers implements Users {
 
 		if( badUserInfo( user ) )
 			return error(BAD_REQUEST);
-
-		return errorOrValue( db.insertOne( user), user.getUserId() );
+		return errorOrValue( DB.insertOne( user, User.class), user.getUserId() );
 	}
 
 	@Override
@@ -61,7 +62,7 @@ public class JavaUsers implements Users {
 		if (userId == null)
 			return error(BAD_REQUEST);
 
-		return validatedUserOrError( db.getOne( userId, User.class), pwd);
+		return validatedUserOrError( DB.getOne( userId, User.class), pwd);
 	}
 
 	@Override
@@ -71,7 +72,7 @@ public class JavaUsers implements Users {
 		if (badUpdateUserInfo(userId, pwd, other))
 			return error(BAD_REQUEST);
 
-		return errorOrResult( validatedUserOrError(db.getOne( userId, User.class), pwd), user -> db.updateOne( user.updateFrom(other)));
+		return errorOrResult( validatedUserOrError(DB.getOne( userId, User.class), pwd), user -> DB.updateOne( user.updateFrom(other), User.class ) );
 	}
 
 	@Override
@@ -81,7 +82,7 @@ public class JavaUsers implements Users {
 		if (userId == null || pwd == null )
 			return error(BAD_REQUEST);
 
-		return errorOrResult( validatedUserOrError(db.getOne( userId, User.class), pwd), user -> {
+		return errorOrResult( validatedUserOrError(DB.getOne( userId, User.class), pwd), user -> {
 
 			// Delete user shorts and related info asynchronously in a separate thread
 			Executors.defaultThreadFactory().newThread( () -> {
@@ -89,7 +90,7 @@ public class JavaUsers implements Users {
 				JavaBlobs.getInstance().deleteAllBlobs(userId, Token.get(userId));
 			}).start();
 
-			return db.deleteOne( user);
+			return DB.deleteOne( user, User.class);
 		});
 	}
 
@@ -100,7 +101,7 @@ public class JavaUsers implements Users {
 		// Handle null or empty search pattern
 		if (pattern == null || pattern.trim().isEmpty()) {
 			var query = "SELECT * FROM User";  // Query to fetch all users if no pattern is provided
-			var hits = db.sql(query, User.class)
+			var hits = DB.sql(query, User.class)
 					.stream()
 					.map(User::copyWithoutPassword)
 					.toList();
@@ -110,7 +111,7 @@ public class JavaUsers implements Users {
 
 		// If pattern is not null or empty, proceed with search
 		var query = format("SELECT * FROM User u WHERE UPPER(u.id) LIKE '%%%s%%'", pattern.toUpperCase());
-		var hits = db.sql(query, User.class)
+		var hits = DB.sql(query, User.class)
 				.stream()
 				.map(User::copyWithoutPassword)
 				.toList();
