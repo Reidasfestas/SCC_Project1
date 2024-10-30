@@ -9,53 +9,57 @@ import java.util.function.Function;
 
 public class DB {
 
-	private static Database database;
+	public DB() {
 
-	public static void configure(Database db) {
+	}
+
+	private Database database;
+
+	public void configure(Database db) {
 		database = db;
 	}
 
-	public static void configureHibernateDB() {
+	public void configureHibernateDB() {
 		database = new HibernateDatabase();
 	}
 
-	public static void configureCosmosDB() {
-		database = CosmosDatabase.getInstance();
+	public void configureCosmosDB() {
+		database = new CosmosDatabase();
 	}
 
-	public static void changeContainerName(String containerName) {
+	public void changeContainerName(String containerName) {
 		database.changeContainer(containerName);
 	}
 
-	public static <T> List<T> sql(String query, Class<T> clazz) {
+	public <T> List<T> sql(String query, Class<T> clazz) {
 		return database.sql(query, clazz);
 	}
 
-	public static <T> List<T> sql(Class<T> clazz, String fmt, Object... args) {
+	public <T> List<T> sql(Class<T> clazz, String fmt, Object... args) {
 		return database.sql(clazz, fmt, args);
 	}
 
-	public static <T> Result<T> getOne(String id, Class<T> clazz) {
+	public <T> Result<T> getOne(String id, Class<T> clazz) {
 		return database.getOne(id, clazz);
 	}
 
-	public static <T> Result<T> deleteOne(T obj) {
+	public <T> Result<T> deleteOne(T obj) {
 		return database.deleteOne(obj);
 	}
 
-	public static <T> Result<T> updateOne(T obj) {
+	public <T> Result<T> updateOne(T obj) {
 		return database.updateOne(obj);
 	}
 
-	public static <T> Result<T> insertOne(T obj) {
+	public <T> Result<T> insertOne(T obj) {
 		return database.insertOne(obj);
 	}
 
-	public static <T> Result<T> transaction(Consumer<Session> c) {
+	public <T> Result<T> transaction(Consumer<Session> c) {
 		return database.transaction(c);
 	}
 
-	public static <T> Result<T> transaction(Function<Session, Result<T>> func) {
+	public <T> Result<T> transaction(Function<Session, Result<T>> func) {
 		return database.transaction(func);
 	}
 }

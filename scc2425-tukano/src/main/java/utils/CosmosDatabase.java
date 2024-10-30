@@ -49,14 +49,19 @@ public class CosmosDatabase implements Database {
 
     }
 
-//    public CosmosDatabase(String endpoint, String key, String databaseName, String containerName) {
-//        this.client = new CosmosClientBuilder()
-//                .endpoint(endpoint)
-//                .key(key)
-//                .consistencyLevel(ConsistencyLevel.EVENTUAL)
-//                .buildClient();
-//        this.container = client.getDatabase(databaseName).getContainer(containerName);
-//    }
+    public CosmosDatabase() {
+        client = new CosmosClientBuilder()
+                .endpoint(CONNECTION_URL)
+                .key(DB_KEY)
+                //.directMode()
+                .gatewayMode()
+                // replace by .directMode() for better performance
+                .consistencyLevel(ConsistencyLevel.SESSION)
+                .connectionSharingAcrossClientsEnabled(true)
+                .contentResponseOnWriteEnabled(true)
+                .buildClient();
+        instance = new CosmosDatabase(client);
+    }
 
     public CosmosDatabase(CosmosClient client) {
         this.client = client;
