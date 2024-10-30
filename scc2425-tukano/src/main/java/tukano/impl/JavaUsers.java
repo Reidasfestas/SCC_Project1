@@ -76,9 +76,9 @@ public class JavaUsers implements Users {
 			return error(BAD_REQUEST);
 
 		if(REDISCACHE) {
-			var user = JSON.decode( jedis.get("user:" + userId), User.class);
+			var user = jedis.get("user:" + userId);
 			if (user != null)
-				return  validatedUserOrError( ok(user), pwd);
+				return  validatedUserOrError( ok(JSON.decode(user, User.class)), pwd);
 
 			var res = DB.getOne(userId, User.class);
 			if (res.isOK())
@@ -146,9 +146,8 @@ public class JavaUsers implements Users {
 				.map(User::copyWithoutPassword)
 				.toList();
 
-		if (REDISCACHE) {
+		if (REDISCACHE)
 			jedis.setex("searchUsers:" + pattern.toUpperCase(), 60, JSON.encode(hits));
-		}
 
 		return ok(hits);
 	}

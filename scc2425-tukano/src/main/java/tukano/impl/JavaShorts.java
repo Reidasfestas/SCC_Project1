@@ -94,9 +94,9 @@ public class JavaShorts implements Shorts {
 		if (REDISCACHE) {
 			likes = List.of((long) getLikeCount(LIKES_PREFIX + shortId));
 
-			var shrtRes = JSON.decode( jedis.get("shrt:" + shortId), Short.class);
+			var shrtRes = jedis.get("shrt:" + shortId);
 			if (shrtRes != null)
-				return  errorOrValue( Result.ok(shrtRes), shrt -> shrt.copyWithLikes_And_Token( likes.get(0)));
+				return  errorOrValue( Result.ok(JSON.decode(shrtRes, Short.class)), shrt -> shrt.copyWithLikes_And_Token( likes.get(0)));
 
 			var res = DB.getOne(shortId, Short.class);
 			if (res.isOK()) {
@@ -160,7 +160,6 @@ public class JavaShorts implements Shorts {
 	public Result<Void> follow(String userId1, String userId2, boolean isFollowing, String password) {
 		Log.info(() -> format("follow : userId1 = %s, userId2 = %s, isFollowing = %s, pwd = %s\n", userId1, userId2, isFollowing, password));
 
-
 		return errorOrResult( okUser(userId1, password), user -> {
 			var f = new Following(userId1, userId2);
 			return errorOrVoid( okUser( userId2), isFollowing ? DB.insertOne( f ) : DB.deleteOne( f ));
@@ -171,8 +170,21 @@ public class JavaShorts implements Shorts {
 	public Result<List<String>> followers(String userId, String password) {
 		Log.info(() -> format("followers : userId = %s, pwd = %s\n", userId, password));
 
+		if (REDISCACHE) {
+			var cachedHits = jedis.get("followers:" + userId);
+			if (cachedHits != null) {
+				List<String> res = JSON.decode(cachedHits, new TypeReference<>() {});
+				return errorOrValue( okUser(userId, password), ok(res));
+			}
+		}
+
 		var query = format("SELECT f.follower FROM Following f WHERE f.followee = '%s'", userId);
-		return errorOrValue( okUser(userId, password), DB.sql(query, String.class));
+		var hits = DB.sql(query, String.class);
+
+		if (REDISCACHE)
+			jedis.setex("followers:" + userId, 60, JSON.encode(hits));
+
+		return errorOrValue( okUser(userId, password), hits);
 	}
 
 	@Override
@@ -221,6 +233,14 @@ public class JavaShorts implements Shorts {
 	public Result<List<String>> getFeed(String userId, String password) {
 		Log.info(() -> format("getFeed : userId = %s, pwd = %s\n", userId, password));
 
+		if (REDISCACHE) {
+			var cachedHits = jedis.get("getFeed:" + userId);
+			if (cachedHits != null) {
+				List<String> res = JSON.decode(cachedHits, new TypeReference<>() {});
+				return errorOrValue( okUser(userId, password), ok(res));
+			}
+		}
+
 		final var QUERY_FMT = """
 				SELECT s.shortId, s.timestamp FROM Short s WHERE	s.ownerId = '%s'
 				UNION
@@ -229,7 +249,12 @@ public class JavaShorts implements Shorts {
 						f.followee = s.ownerId AND f.follower = '%s'
 				ORDER BY s.timestamp DESC""";
 
-		return errorOrValue( okUser( userId, password), DB.sql( format(QUERY_FMT, userId, userId), String.class));
+		var hits = DB.sql( format(QUERY_FMT, userId, userId), String.class);
+
+		if (REDISCACHE)
+			jedis.setex("getFeed:" + userId, 60, JSON.encode(hits));
+
+		return errorOrValue( okUser( userId, password), hits);
 	}
 
 	protected Result<User> okUser( String userId, String pwd) {

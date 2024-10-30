@@ -1,44 +1,52 @@
 config:
-    target: http://127.0.0.1:8080/tukano/rest
-    processor: ./usersTest.js
-    phases:
-        - name: simple_post
-          duration: 3
-          arrivalRate: 1
-    payload:
-        path: ../data/users.csv
-        order: sequence # selects users sequentially, default is random
-        #loadAll: true # load the whole CSV
-        skipHeader: true # The first line is a header, so we want to skip it
-        delimiter: "," # standard delimiter
-        skipEmptyLines: true # not important in our case
-        fields:
-            - "id"
-            - "pwd"
-            - "email"
-            - "displayName"
-scenarios:
-    - name: TuKanoRegister
-      flow:
-          - post:
-                url: /users/
-                headers:
-                    Content-Type: application/json
-                json:
-                    id: "{{ id }}" # this parameter is filled from the fields above
-                    pwd: "{{ pwd }}"
-                    email: "{{ email }}"
-                    displayName: "{{ displayName }}"
-          - put:
-                url: /users/
-                headers:
-                  Content-Type: application/json
-                  Accept: application/json
-                beforeRequest: "updateUser"
-          - get:
-              url: /users/?query=
-              headers:
-                accept: application/json
-          - delete:
-              url: /users/jdoe?pwd=password123
+  target: "http://127.0.0.1:8080/tukano/rest"
+  processor: "./usersTest.js"
+  phases:
+    - duration: 3
+      arrivalRate: 1
+      name: "Phase 1 - postUsers"
+      scenario: "Scenario 1"
 
+    #- duration: 1
+    #  arrivalRate: 1
+    #  name: "Phase 2 - the rest"
+    #  scenario: "Scenario 2"
+  payload:
+    path: "../data/users.csv"
+    order: sequence
+    skipHeader: true
+    delimiter: ","
+    skipEmptyLines: true
+    fields:
+      - "id"
+      - "pwd"
+      - "email"
+      - "displayName"
+
+scenarios:
+  - name: "Scenario 1"
+    flow:
+      - post:
+          url: "/users/"
+          headers:
+            Content-Type: application/json
+          json:
+            id: "{{ id }}"
+            pwd: "{{ pwd }}"
+            email: "{{ email }}"
+            displayName: "{{ displayName }}"
+
+  #- name: "Scenario 2"
+  #  flow:
+  #    - put:
+  #        url: "/users/"
+  #        headers:
+  #          Content-Type: application/json
+  #          Accept: application/json
+  #        beforeRequest: "updateUser"
+  #    - get:
+  #        url: "/users/?query="
+  #        headers:
+  #          accept: application/json
+  #    - delete:
+  #        url: "/users/jdoe?pwd=password123"
