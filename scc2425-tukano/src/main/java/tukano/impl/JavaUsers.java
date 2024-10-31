@@ -24,8 +24,6 @@ public class JavaUsers implements Users {
 	private static Users instance;
 
 	private static final boolean COSMOS_DB = true;
-	private static final String USERS_CONTAINER = "users";
-	//private static DB db;
 
 	synchronized public static Users getInstance() {
 		if( instance == null )
@@ -34,14 +32,10 @@ public class JavaUsers implements Users {
 	}
 
 	private JavaUsers() {
-		//db = new DB();
 		if(COSMOS_DB) {
-//			db.configureCosmosDB();
-//			db.changeContainerName(CONTAINER_NAME);
 			DB.configureCosmosDB();
 		}
 		else {
-//			db.configureHibernateDB();
 			DB.configureHibernateDB();
 		}
 	}

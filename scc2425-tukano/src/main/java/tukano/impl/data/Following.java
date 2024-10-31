@@ -21,13 +21,15 @@ public class Following{
 	@Id 
 	String followee;
 
-	Following() {}
 
 	public Following(String follower, String followee) {
 		super();
 		this.follower = follower;
 		this.followee = followee;
+		this.id = follower + "_" + followee;
 	}
+
+	public Following() {}
 
 	public String getFollower() {
 		return follower;

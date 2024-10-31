@@ -16,8 +16,6 @@ import tukano.api.Result;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import tukano.api.Blobs;
-import tukano.api.Result;
 import tukano.api.Short;
 import tukano.api.Shorts;
 import tukano.api.User;
@@ -33,8 +31,6 @@ public class JavaShorts implements Shorts {
 	private static Shorts instance;
 
 	private static final boolean COSMOS_DB = true;
-	private static final String CONTAINER_NAME = "shorts";
-	//private static DB db;
 
 	synchronized public static Shorts getInstance() {
 		if( instance == null )
@@ -43,10 +39,8 @@ public class JavaShorts implements Shorts {
 	}
 
 	private JavaShorts() {
-		//db = new DB();
 		if(COSMOS_DB) {
 			DB.configureCosmosDB();
-			//db.changeContainerName(CONTAINER_NAME);
 		}
 		else {
 			DB.configureHibernateDB();
@@ -90,37 +84,40 @@ public class JavaShorts implements Shorts {
 	public Result<Void> deleteShort(String shortId, String password) {
 		Log.info(() -> format("deleteShort : shortId = %s, pwd = %s\n", shortId, password));
 
-		return errorOrResult( getShort(shortId), shrt -> {
+		return errorOrResult(getShort(shortId), shrt -> {
 
-			return errorOrResult( okUser( shrt.getOwnerId(), password), user -> {
+			return errorOrResult(okUser(shrt.getOwnerId(), password), user -> {
 
-				if(COSMOS_DB) {
-					return DB.transaction( cosmos -> {
+				if (COSMOS_DB) {
 						var query = format("select l.id FROM Likes l WHERE l.shortId = '%s'", shortId);
 						List<Likes> likes = DB.sql(query, Likes.class);
 
-						for(Likes like : likes) {
+						Log.info("Likes size: " +likes.size());
+
+						for (Likes like : likes) {
 							DB.deleteOne(like);
 						}
-						JavaBlobs.getInstance().delete(shrt.getBlobUrl(), Token.get() );
+						JavaBlobs.getInstance().delete(shrt.getBlobUrl(), Token.get());
 						DB.deleteOne(shrt);
+						return Result.ok();
 
+				} else {
+					return DB.transaction(hibernate -> {
+						hibernate.remove(shrt);
+
+						var query = format("DELETE Likes l WHERE l.shortId = '%s'", shortId);
+						hibernate.createNativeQuery(query, Likes.class).executeUpdate();
+
+						JavaBlobs.getInstance().delete(shrt.getBlobUrl(), Token.get());
+						return Result.ok(); // Add this to complete the transaction with Hibernate
 					});
-
 				}
 
-				return DB.transaction( hibernate -> {
-
-					hibernate.remove( shrt);
-
-					var query = format("DELETE Likes l WHERE l.shortId = '%s'", shortId);
-					hibernate.createNativeQuery( query, Likes.class).executeUpdate();
-
-					JavaBlobs.getInstance().delete(shrt.getBlobUrl(), Token.get() );
-				});
 			});
+
 		});
 	}
+
 
 	@Override
 	public Result<List<String>> getShorts(String userId) {
@@ -154,7 +151,15 @@ public class JavaShorts implements Shorts {
 		Log.info(() -> format("followers : userId = %s, pwd = %s\n", userId, password));
 
 		var query = format("SELECT f.follower FROM Following f WHERE f.followee = '%s'", userId);
-		return errorOrValue( okUser(userId, password), DB.sql(query, String.class));
+
+		List<Following> shorts = DB.sql(query, Following.class);
+
+		List<String> followerIds = shorts.stream()
+				.map(Following::getFollower)
+				.toList();
+
+
+		return errorOrValue( okUser(userId, password), followerIds);
 	}
 
 	@Override
@@ -192,14 +197,23 @@ public class JavaShorts implements Shorts {
 		Log.info(() -> format("getFeed : userId = %s, pwd = %s\n", userId, password));
 
 		final var QUERY_FMT = """
-				SELECT s.shortId, s.timestamp FROM Short s WHERE	s.ownerId = '%s'				
+				SELECT s.id, s.timestamp FROM Short s WHERE	s.ownerId = '%s'				
 				UNION			
-				SELECT s.shortId, s.timestamp FROM Short s, Following f 
+				SELECT s.id, s.timestamp FROM Short s, Following f 
 					WHERE 
 						f.followee = s.ownerId AND f.follower = '%s' 
 				ORDER BY s.timestamp DESC""";
 
-		return errorOrValue( okUser( userId, password), DB.sql( format(QUERY_FMT, userId, userId), String.class));
+		List<Short> shorts = DB.sql(format(QUERY_FMT, userId, userId), Short.class);
+
+		List<String> feed = shorts.stream()
+				.map(s -> String.format("(%s, %s)", s.getShortId(), s.getTimestamp()))
+				.toList();
+
+		Log.info("Feed size:  " + feed.size());
+
+		//return errorOrValue( okUser( userId, password), DB.sql( format(QUERY_FMT, userId, userId), String.class));
+		return errorOrValue( okUser( userId, password), feed);
 	}
 
 	protected Result<User> okUser( String userId, String pwd) {
@@ -221,21 +235,29 @@ public class JavaShorts implements Shorts {
 		if( ! Token.isValid( token, userId ) )
 			return error(FORBIDDEN);
 
-		return DB.transaction( (hibernate) -> {
+		if(COSMOS_DB) {
 
-			//delete shorts
-			var query1 = format("DELETE Short s WHERE s.ownerId = '%s'", userId);
-			hibernate.createQuery(query1, Short.class).executeUpdate();
 
-			//delete follows
-			var query2 = format("DELETE Following f WHERE f.follower = '%s' OR f.followee = '%s'", userId, userId);
-			hibernate.createQuery(query2, Following.class).executeUpdate();
+			return Result.ok();
+		}
+		else {
+			return DB.transaction( (hibernate) -> {
 
-			//delete likes
-			var query3 = format("DELETE Likes l WHERE l.ownerId = '%s' OR l.userId = '%s'", userId, userId);
-			hibernate.createQuery(query3, Likes.class).executeUpdate();
+				//delete shorts
+				var query1 = format("DELETE Short s WHERE s.ownerId = '%s'", userId);
+				hibernate.createQuery(query1, Short.class).executeUpdate();
 
-		});
+				//delete follows
+				var query2 = format("DELETE Following f WHERE f.follower = '%s' OR f.followee = '%s'", userId, userId);
+				hibernate.createQuery(query2, Following.class).executeUpdate();
+
+				//delete likes
+				var query3 = format("DELETE Likes l WHERE l.ownerId = '%s' OR l.userId = '%s'", userId, userId);
+				hibernate.createQuery(query3, Likes.class).executeUpdate();
+
+			});
+		}
+
 	}
 
 }
