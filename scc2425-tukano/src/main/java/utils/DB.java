@@ -35,16 +35,16 @@ public class DB {
 		return database.getOne(id, clazz);
 	}
 
-	public static <T> Result<T> deleteOne(T obj, Class<T> clazz) {
-		return database.deleteOne(obj, clazz);
+	public static <T> Result<T> deleteOne(T obj) {
+		return database.deleteOne(obj);
 	}
 
-	public static <T> Result<T> updateOne(T obj, Class<T> clazz) {
-		return database.updateOne(obj, clazz);
+	public static <T> Result<T> updateOne(T obj) {
+		return database.updateOne(obj);
 	}
 
-	public static <T> Result<T> insertOne(T obj, Class<T> clazz) {
-		return database.insertOne(obj, clazz);
+	public static <T> Result<T> insertOne(T obj) {
+		return database.insertOne(obj);
 	}
 
 	public static <T> Result<T> transaction(Consumer<Session> c) {

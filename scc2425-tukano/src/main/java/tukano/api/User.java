@@ -4,8 +4,10 @@ import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import utils.CosmosContainerName;
 
 @Entity
+@CosmosContainerName("users")
 public class User {
 	@Id
 	@JsonProperty("id")

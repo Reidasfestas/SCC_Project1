@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import tukano.impl.Token;
+import utils.CosmosContainerName;
 
 /**
  * Represents a Short video uploaded by an user.
@@ -16,6 +17,7 @@ import tukano.impl.Token;
  *
  */
 @Entity
+@CosmosContainerName("shorts")
 public class Short {
 
 	@Id

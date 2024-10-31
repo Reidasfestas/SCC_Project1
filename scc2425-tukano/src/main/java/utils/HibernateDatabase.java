@@ -50,17 +50,17 @@ public class HibernateDatabase implements Database {
     }
 
     @Override
-    public <T> Result<T> deleteOne(T obj, Class<T> clazz) {
+    public <T> Result<T> deleteOne(T obj) {
         return Hibernate.getInstance().deleteOne(obj);
     }
 
     @Override
-    public <T> Result<T> updateOne(T obj, Class<T> clazz) {
+    public <T> Result<T> updateOne(T obj) {
         return Hibernate.getInstance().updateOne(obj);
     }
 
     @Override
-    public <T> Result<T> insertOne(T obj, Class<T> clazz) {
+    public <T> Result<T> insertOne(T obj) {
         return Result.errorOrValue(Hibernate.getInstance().persistOne(obj), obj);
     }
 

@@ -36,6 +36,7 @@ tukano/impl/storage/AzureBlobStorage.class
 utils/Props.class
 tukano/impl/JavaUsers.class
 tukano/api/Blobs.class
+utils/CosmosContainerName.class
 utils/DB.class
 tukano/api/Result.class
 utils/Queues.class

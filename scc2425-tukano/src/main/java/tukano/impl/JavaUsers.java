@@ -52,7 +52,7 @@ public class JavaUsers implements Users {
 
 		if( badUserInfo( user ) )
 			return error(BAD_REQUEST);
-		return errorOrValue( DB.insertOne( user, User.class), user.getUserId() );
+		return errorOrValue( DB.insertOne( user ), user.getUserId() );
 	}
 
 	@Override
@@ -72,7 +72,7 @@ public class JavaUsers implements Users {
 		if (badUpdateUserInfo(userId, pwd, other))
 			return error(BAD_REQUEST);
 
-		return errorOrResult( validatedUserOrError(DB.getOne( userId, User.class), pwd), user -> DB.updateOne( user.updateFrom(other), User.class ) );
+		return errorOrResult( validatedUserOrError(DB.getOne( userId, User.class), pwd), user -> DB.updateOne( user.updateFrom(other) ) );
 	}
 
 	@Override
@@ -90,7 +90,7 @@ public class JavaUsers implements Users {
 				JavaBlobs.getInstance().deleteAllBlobs(userId, Token.get(userId));
 			}).start();
 
-			return DB.deleteOne( user, User.class);
+			return DB.deleteOne( user );
 		});
 	}
 

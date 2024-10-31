@@ -13,6 +13,7 @@ import java.util.function.Supplier;
 import java.util.logging.Logger;
 
 import com.azure.cosmos.util.CosmosPagedIterable;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import tukano.api.Result;
 import tukano.api.Short;
 import tukano.api.User;
@@ -59,6 +60,7 @@ public class CosmosDatabase implements Database {
 
     public CosmosDatabase(CosmosClient client) {
         this.client = client;
+        init();
     }
 
     public void changeContainer(String containerName) {
@@ -131,12 +133,20 @@ public class CosmosDatabase implements Database {
     }
 
     @Override
-    public <T> Result<T> deleteOne(T obj, Class<T> clazz) {
+    public <T> Result<T> deleteOne(T obj) {
         return tryCatch(() -> {
-            container = containerMap.get(clazz);
-            if (container == null) {
-                Log.info("No container found for class: " + clazz);
+            CosmosContainerName annotation = obj.getClass().getAnnotation(CosmosContainerName.class);
+            // Check if the annotation exists
+            if (annotation == null) {
+                Log.info("No CosmosContainerName annotation found for class: " + obj.getClass());
             }
+
+            // Get the container name from the annotation value
+            String containerName = annotation.value();
+
+            // Retrieve the Cosmos container by name
+            container = db.getContainer(containerName);
+
             // Perform the delete operation on the Cosmos DB container
             container.deleteItem(obj, new CosmosItemRequestOptions());
             // Return the deleted object as part of the Result
@@ -145,22 +155,38 @@ public class CosmosDatabase implements Database {
     }
 
     @Override
-    public <T> Result<T> updateOne(T obj, Class<T> clazz) {
-        container = containerMap.get(clazz);
-        if (container == null) {
-            Log.info("No container found for class: " + clazz);
+    public <T> Result<T> updateOne(T obj) {
+        CosmosContainerName annotation = obj.getClass().getAnnotation(CosmosContainerName.class);
+        // Check if the annotation exists
+        if (annotation == null) {
+            Log.info("No CosmosContainerName annotation found for class: " + obj.getClass());
         }
+
+        // Get the container name from the annotation value
+        String containerName = annotation.value();
+
+        // Retrieve the Cosmos container by name
+        container = db.getContainer(containerName);
         return tryCatch( () -> container.upsertItem(obj).getItem());
     }
 
     @Override
-    public <T> Result<T> insertOne(T obj, Class<T> clazz) {
-        //Log.info(("Trying to create item: " + obj));
-        container = containerMap.get(clazz);
-        if (container == null) {
-            Log.info("No container found for class: " + clazz);
+    public <T> Result<T> insertOne(T obj) {
+        Log.info(("Trying to create item: " + obj));
+        CosmosContainerName annotation = obj.getClass().getAnnotation(CosmosContainerName.class);
+        // Check if the annotation exists
+        if (annotation == null) {
+            Log.info("No CosmosContainerName annotation found for class: " + obj.getClass());
         }
-        return tryCatch( () -> container.createItem(obj).getItem());
+
+        // Get the container name from the annotation value
+        String containerName = annotation.value();
+
+        // Retrieve the Cosmos container by name
+        container = db.getContainer(containerName);
+
+        // Insert the item into the determined container
+        return tryCatch(() -> container.createItem(obj).getItem());
     }
 
     @Override
