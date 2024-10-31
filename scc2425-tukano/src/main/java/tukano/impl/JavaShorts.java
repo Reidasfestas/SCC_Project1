@@ -196,6 +196,12 @@ public class JavaShorts implements Shorts {
 	public Result<List<String>> getFeed(String userId, String password) {
 		Log.info(() -> format("getFeed : userId = %s, pwd = %s\n", userId, password));
 
+		// Need to do sequential
+		// First do a query for my own shorts
+		// Then do a query for the the people i follow
+		// Then get the shorts of the people i follow
+		// Then join my shorts with the ones from the people i follow
+
 		final var QUERY_FMT = """
 				SELECT s.id, s.timestamp FROM Short s WHERE	s.ownerId = '%s'				
 				UNION			
@@ -203,6 +209,8 @@ public class JavaShorts implements Shorts {
 					WHERE 
 						f.followee = s.ownerId AND f.follower = '%s' 
 				ORDER BY s.timestamp DESC""";
+
+
 
 		List<Short> shorts = DB.sql(format(QUERY_FMT, userId, userId), Short.class);
 
