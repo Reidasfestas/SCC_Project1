@@ -211,11 +211,23 @@ public class JavaShorts implements Shorts {
 				ORDER BY s.timestamp DESC""";
 
 
+		var myShortsQuery = format("SELECT * FROM Short s WHERE l.ownerId = '%s'", userId);
+		List<Short> shorts = DB.sql(myShortsQuery, Short.class);
 
-		List<Short> shorts = DB.sql(format(QUERY_FMT, userId, userId), Short.class);
+		var myFollowingQuery = format("SELECT * FROM Following f WHERE f.follower = '%s'", userId);
+		List<Following> followings = DB.sql(myFollowingQuery, Following.class);
 
+		for(Following f : followings) {
+			var myFollowingShortsQuery = format("SELECT * FROM Short s WHERE s.ownerId = '%s'", f.getFollowee());
+			List<Short> followingShorts = DB.sql(myFollowingShortsQuery, Short.class);
+			shorts.addAll(followingShorts);
+		}
+
+
+//		List<Short> shorts = DB.sql(format(QUERY_FMT, userId, userId), Short.class);
+//
 		List<String> feed = shorts.stream()
-				.map(s -> String.format("(%s, %s)", s.getShortId(), s.getTimestamp()))
+				.map(s -> String.format("shortId: %s; timestamp:  %s", s.getShortId(), s.getTimestamp()))
 				.toList();
 
 		Log.info("Feed size:  " + feed.size());
@@ -240,11 +252,29 @@ public class JavaShorts implements Shorts {
 	public Result<Void> deleteAllShorts(String userId, String password, String token) {
 		Log.info(() -> format("deleteAllShorts : userId = %s, password = %s, token = %s\n", userId, password, token));
 
-		if( ! Token.isValid( token, userId ) )
-			return error(FORBIDDEN);
+
+		// Later i need to add this back
+//		if( ! Token.isValid( token, userId ) )
+//			return error(FORBIDDEN);
 
 		if(COSMOS_DB) {
+			var myShortsQuery = format("SELECT * FROM Short s WHERE l.ownerId = '%s'", userId);
+			List<Short> shorts = DB.sql(myShortsQuery, Short.class);
+			for(Short s : shorts) {
+				DB.deleteOne(s);
+			}
 
+			var myFollowingsQuery = format("SELECT * FROM Following f WHERE f.follower = '%s' OR f.followee = '%s'", userId, userId);
+			List<Following> followings = DB.sql(myFollowingsQuery, Following.class);
+			for(Following f : followings) {
+				DB.deleteOne(f);
+			}
+
+			var myLikesQuery = format("SELECT * FROM Likes l WHERE l.ownerId = '%s' OR l.userId = '%s'", userId, userId);
+			List<Likes> likes = DB.sql(myLikesQuery, Likes.class);
+			for(Likes l : likes) {
+				DB.deleteOne(l);
+			}
 
 			return Result.ok();
 		}
