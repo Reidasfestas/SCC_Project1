@@ -235,7 +235,6 @@ public class JavaShorts implements Shorts {
 	public Result<Void> follow(String userId1, String userId2, boolean isFollowing, String password) {
 		Log.info(() -> format("follow : userId1 = %s, userId2 = %s, isFollowing = %s, pwd = %s\n", userId1, userId2, isFollowing, password));
 
-
 		return errorOrResult( okUser(userId1, password), user -> {
 			var f = new Following(userId1, userId2);
 			return errorOrVoid( okUser( userId2), isFollowing ? DB.insertOne( f ) : DB.deleteOne( f ));
@@ -371,7 +370,7 @@ public class JavaShorts implements Shorts {
 		});
 	}
 
-
+	// TODO: Check Cache logic for this method
 
 	@Override
 	public Result<Void> deleteAllShorts(String userId, String password, String token) {
