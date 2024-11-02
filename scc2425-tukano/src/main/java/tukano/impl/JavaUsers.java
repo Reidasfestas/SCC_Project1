@@ -1,21 +1,24 @@
 package tukano.impl;
 
 import static java.lang.String.format;
+import static tukano.api.Result.ErrorCode.*;
 import static tukano.api.Result.error;
 import static tukano.api.Result.errorOrResult;
 import static tukano.api.Result.errorOrValue;
 import static tukano.api.Result.ok;
-import static tukano.api.Result.ErrorCode.BAD_REQUEST;
-import static tukano.api.Result.ErrorCode.FORBIDDEN;
 
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import redis.clients.jedis.Jedis;
 import tukano.api.Result;
 import tukano.api.User;
 import tukano.api.Users;
 import utils.DB;
+import utils.JSON;
+import utils.RedisCache;
 
 public class JavaUsers implements Users {
 
@@ -24,6 +27,11 @@ public class JavaUsers implements Users {
 	private static Users instance;
 
 	private static final boolean COSMOS_DB = true;
+
+	private static final boolean REDISCACHE = false;
+	private static Jedis jedis;
+	private static final String MOST_RECENT_USERS_LIST = "MostRecentUsers";
+	private static final int MAX_CACHED_USERS = 10;
 
 	synchronized public static Users getInstance() {
 		if( instance == null )
@@ -38,6 +46,8 @@ public class JavaUsers implements Users {
 		else {
 			DB.configureHibernateDB();
 		}
+		if (REDISCACHE)
+			jedis = RedisCache.getCachePool().getResource();
 	}
 
 	@Override
@@ -46,7 +56,14 @@ public class JavaUsers implements Users {
 
 		if( badUserInfo( user ) )
 			return error(BAD_REQUEST);
-		return errorOrValue( DB.insertOne( user ), user.getUserId() );
+
+		var res = DB.insertOne( user );
+		if (REDISCACHE) {
+			if (res.isOK())
+				cacheUser(res.value().getUserId(), JSON.encode(res.value()));
+		}
+
+		return errorOrValue( res, user.getUserId() );
 	}
 
 	@Override
@@ -55,6 +72,18 @@ public class JavaUsers implements Users {
 
 		if (userId == null)
 			return error(BAD_REQUEST);
+
+		if(REDISCACHE) {
+			var user = jedis.get("user:" + userId);
+			if (user != null)
+				return  validatedUserOrError( ok(JSON.decode(user, User.class)), pwd);
+
+			var res = DB.getOne(userId, User.class);
+			if (res.isOK())
+				cacheUser(res.value().getUserId(), JSON.encode(res.value()));
+
+			return validatedUserOrError(res, pwd);
+		}
 
 		return validatedUserOrError( DB.getOne( userId, User.class), pwd);
 	}
@@ -66,7 +95,13 @@ public class JavaUsers implements Users {
 		if (badUpdateUserInfo(userId, pwd, other))
 			return error(BAD_REQUEST);
 
-		return errorOrResult( validatedUserOrError(DB.getOne( userId, User.class), pwd), user -> DB.updateOne( user.updateFrom(other) ) );
+		var res = validatedUserOrError(DB.getOne( userId, User.class), pwd);
+		if (REDISCACHE) {
+			if (res.isOK())
+				cacheUser(res.value().getUserId(), JSON.encode(res.value()));
+		}
+
+		return errorOrResult( res, user -> DB.updateOne( user.updateFrom(other)));
 	}
 
 	@Override
@@ -84,13 +119,24 @@ public class JavaUsers implements Users {
 				JavaBlobs.getInstance().deleteAllBlobs(userId, Token.get(userId));
 			}).start();
 
-			return DB.deleteOne( user );
+			var res = DB.deleteOne( user);
+			if (REDISCACHE && res.isOK())
+				deleteCachedUser(res.value().getUserId(), JSON.encode(res.value()));
+			return res;
 		});
 	}
 
 	@Override
 	public Result<List<User>> searchUsers(String pattern) {
 		Log.info(() -> format("searchUsers : pattern = %s\n", pattern));
+
+		if (REDISCACHE) {
+			var cachedHits = jedis.get("searchUsers:" + pattern.toUpperCase());
+			if (cachedHits != null) {
+				List<User> res = JSON.decode(cachedHits, new TypeReference<>() {});
+				return ok(res);
+			}
+		}
 
 		// Handle null or empty search pattern
 		if (pattern == null || pattern.trim().isEmpty()) {
@@ -99,7 +145,6 @@ public class JavaUsers implements Users {
 					.stream()
 					.map(User::copyWithoutPassword)
 					.toList();
-
 			return ok(hits);
 		}
 
@@ -109,6 +154,9 @@ public class JavaUsers implements Users {
 				.stream()
 				.map(User::copyWithoutPassword)
 				.toList();
+
+		if (REDISCACHE)
+			jedis.setex("searchUsers:" + pattern.toUpperCase(), 60, JSON.encode(hits));
 
 		return ok(hits);
 	}
@@ -128,5 +176,24 @@ public class JavaUsers implements Users {
 
 	private boolean badUpdateUserInfo( String userId, String pwd, User info) {
 		return (userId == null || pwd == null || info.getUserId() != null && ! userId.equals( info.getUserId()));
+	}
+
+	private void cacheUser(String userId, String value) {
+		jedis.set("user:" + userId, value);
+
+		jedis.lpush(MOST_RECENT_USERS_LIST, value );
+
+		var toTrim = jedis.lrange(MOST_RECENT_USERS_LIST, MAX_CACHED_USERS, -1);
+		if (!toTrim.isEmpty()) {
+			jedis.ltrim(MOST_RECENT_USERS_LIST, 0, MAX_CACHED_USERS - 1);
+
+			jedis.del("user:" + JSON.decode(toTrim.get(0), User.class).getUserId());
+		}
+	}
+
+	private void deleteCachedUser(String userId, String value) {
+		jedis.del("user:" + userId);
+
+		jedis.lrem(MOST_RECENT_USERS_LIST, 0, value);
 	}
 }

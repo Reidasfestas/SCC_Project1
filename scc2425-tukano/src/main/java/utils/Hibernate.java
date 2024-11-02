@@ -23,13 +23,12 @@ import tukano.api.Result.ErrorCode;
 public class Hibernate {
 //	private static Logger Log = Logger.getLogger(Hibernate.class.getName());
 
-	private static final String HIBERNATE_CFG_FILE = "main/webapp/WEB-INF/classes/hibernate.cfg.xml";
 	private SessionFactory sessionFactory;
 	private static Hibernate instance;
 
 	private Hibernate() {
 		try {
-			sessionFactory = new Configuration().configure().buildSessionFactory();    //(new File(HIBERNATE_CFG_FILE)).buildSessionFactory();
+			sessionFactory = new Configuration().configure().buildSessionFactory();
 
 		} catch (Exception e) {
 			e.printStackTrace();

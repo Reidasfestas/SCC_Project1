@@ -8,9 +8,15 @@ import static tukano.api.Result.errorOrVoid;
 import static tukano.api.Result.ok;
 import static tukano.api.Result.ErrorCode.BAD_REQUEST;
 import static tukano.api.Result.ErrorCode.FORBIDDEN;
+import static utils.DB.getOne;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Logger;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import redis.clients.jedis.Jedis;
 import tukano.api.Blobs;
 import tukano.api.Result;
 import java.util.logging.Logger;
@@ -23,6 +29,8 @@ import tukano.impl.data.Following;
 import tukano.impl.data.Likes;
 import tukano.impl.rest.TukanoRestServer;
 import utils.DB;
+import utils.JSON;
+import utils.RedisCache;
 
 public class JavaShorts implements Shorts {
 
@@ -31,6 +39,12 @@ public class JavaShorts implements Shorts {
 	private static Shorts instance;
 
 	private static final boolean COSMOS_DB = true;
+
+	private static final boolean REDISCACHE = false;
+	private static Jedis jedis;
+	private static final String MOST_RECENT_SHRTS_LIST = "MostRecentShrts";
+	private static final String LIKES_PREFIX = "likes:";
+	private static final int MAX_CACHED_SHRTS = 10;
 
 	synchronized public static Shorts getInstance() {
 		if( instance == null )
@@ -45,6 +59,44 @@ public class JavaShorts implements Shorts {
 		else {
 			DB.configureHibernateDB();
 		}
+		if (REDISCACHE)
+			jedis = RedisCache.getCachePool().getResource();
+	}
+
+	protected Result<User> okUser( String userId, String pwd) {
+		return JavaUsers.getInstance().getUser(userId, pwd);
+	}
+
+	private Result<Void> okUser( String userId ) {
+		var res = okUser( userId, "");
+		if( res.error() == FORBIDDEN )
+			return ok();
+		else
+			return error( res.error() );
+	}
+
+	private void cacheShrt(String shortId, String value) {
+		jedis.set("shrt:" + shortId, value);
+
+		jedis.lpush(MOST_RECENT_SHRTS_LIST, value );
+
+		var toTrim = jedis.lrange(MOST_RECENT_SHRTS_LIST, MAX_CACHED_SHRTS, -1);
+		if (!toTrim.isEmpty()) {
+			jedis.ltrim(MOST_RECENT_SHRTS_LIST, 0, MAX_CACHED_SHRTS - 1);
+
+			jedis.del("shrt:" + JSON.decode(toTrim.get(0), User.class).getUserId());
+		}
+	}
+
+	private int getLikeCount(String shortId) {
+		String count = jedis.get(LIKES_PREFIX + shortId);
+		return count != null ? Integer.parseInt(count) : 0;
+	}
+
+	private void deleteCachedShrt(String shortId, String value) {
+		jedis.del("shrt:" + shortId);
+
+		jedis.lrem(MOST_RECENT_SHRTS_LIST, 0, value);
 	}
 
 
@@ -60,7 +112,13 @@ public class JavaShorts implements Shorts {
 			else blobUrl = format("%s/%s/%s", TukanoRestServer.serverURI, Blobs.NAME, shortId);
 			var shrt = new Short(shortId, userId, blobUrl);
 
-			return errorOrValue(DB.insertOne(shrt), s -> s.copyWithLikes_And_Token(0));
+			var res = DB.insertOne(shrt);
+			if (REDISCACHE) {
+				if (res.isOK())
+					cacheShrt(res.value().getShortId(), JSON.encode(res.value()));
+			}
+
+			return errorOrValue(res, s -> s.copyWithLikes_And_Token(0));
 		});
 	}
 
@@ -71,10 +129,26 @@ public class JavaShorts implements Shorts {
 		if( shortId == null )
 			return error(BAD_REQUEST);
 
-		var query = format("SELECT l.id FROM Likes l WHERE l.shortId = '%s'", shortId);
-		var likes = DB.sql(query, Likes.class);
+		List<Long> likes;
 
-		long likeCount = (!likes.isEmpty()) ? likes.size() : 0L;
+		if (REDISCACHE) {
+			likes = List.of((long) getLikeCount(LIKES_PREFIX + shortId));
+
+			var shrtRes = jedis.get("shrt:" + shortId);
+			if (shrtRes != null)
+				return  errorOrValue( Result.ok(JSON.decode(shrtRes, Short.class)), shrt -> shrt.copyWithLikes_And_Token( likes.get(0)));
+
+			var res = getOne(shortId, Short.class);
+			if (res.isOK()) {
+				cacheShrt(res.value().getShortId(), JSON.encode(res.value()));
+			}
+			return errorOrValue(res, shrt -> shrt.copyWithLikes_And_Token( likes.get(0)));
+		}
+
+        var query = format("SELECT l.id FROM Likes l WHERE l.shortId = '%s'", shortId);
+		var likesList = DB.sql(query, Likes.class);
+
+		long likeCount = likesList.size();
 
 		return errorOrValue( DB.getOne(shortId, Short.class), shrt -> shrt.copyWithLikes_And_Token( likeCount ));
 	}
@@ -89,17 +163,28 @@ public class JavaShorts implements Shorts {
 			return errorOrResult(okUser(shrt.getOwnerId(), password), user -> {
 
 				if (COSMOS_DB) {
-						var query = format("select l.id FROM Likes l WHERE l.shortId = '%s'", shortId);
-						List<Likes> likes = DB.sql(query, Likes.class);
+					var query = format("select l.id FROM Likes l WHERE l.shortId = '%s'", shortId);
+					List<Likes> likes = DB.sql(query, Likes.class);
 
-						Log.info("Likes size: " +likes.size());
+					Log.info("Likes size: " + likes.size());
 
-						for (Likes like : likes) {
-							DB.deleteOne(like);
+					for (Likes like : likes) {
+						var res = DB.deleteOne(like);
+						if (REDISCACHE && res.isOK()) {
+							jedis.decr(LIKES_PREFIX + shortId);
 						}
-						JavaBlobs.getInstance().delete(shrt.getBlobUrl(), Token.get());
-						DB.deleteOne(shrt);
-						return Result.ok();
+					}
+
+					JavaBlobs.getInstance().delete(shrt.getBlobUrl(), Token.get());
+					var res = DB.deleteOne(shrt);
+
+					if (REDISCACHE && res.isOK()) {
+						deleteCachedShrt(shortId, JSON.encode(res.value()));
+
+						jedis.del(LIKES_PREFIX + shortId);
+					}
+
+					return Result.ok();
 
 				} else {
 					return DB.transaction(hibernate -> {
@@ -108,13 +193,15 @@ public class JavaShorts implements Shorts {
 						var query = format("DELETE Likes l WHERE l.shortId = '%s'", shortId);
 						hibernate.createNativeQuery(query, Likes.class).executeUpdate();
 
-						JavaBlobs.getInstance().delete(shrt.getBlobUrl(), Token.get());
-						return Result.ok(); // Add this to complete the transaction with Hibernate
+						var res = JavaBlobs.getInstance().delete(shrt.getBlobUrl(), Token.get());
+						if (REDISCACHE && res.isOK()) {
+							deleteCachedShrt(shortId, JSON.encode(res.value()));
+
+							jedis.del(LIKES_PREFIX + shortId);
+						}
 					});
 				}
-
 			});
-
 		});
 	}
 
@@ -123,14 +210,23 @@ public class JavaShorts implements Shorts {
 	public Result<List<String>> getShorts(String userId) {
 		Log.info(() -> format("getShorts : userId = %s\n", userId));
 
-		var query = format("SELECT s.id FROM Short s WHERE s.ownerId = '%s'", userId);
-//		return errorOrValue( okUser(userId), DB.sql( query, String.class));
+		if (REDISCACHE) {
+			var cachedHits = jedis.get("getShorts:" + userId);
+			if (cachedHits != null) {
+				List<String> res = JSON.decode(cachedHits, new TypeReference<>() {});
+				return ok(res);
+			}
+		}
 
+		var query = format("SELECT s.id FROM Short s WHERE s.ownerId = '%s'", userId);
 		List<Short> shorts = DB.sql(query, Short.class);
 
 		List<String> shortIds = shorts.stream()
 				.map(Short::getShortId)
 				.collect(Collectors.toList());
+
+		if (REDISCACHE)
+			jedis.setex("getShorts:" + userId, 60, JSON.encode(shortIds));
 
 		return errorOrValue(okUser(userId), shortIds);
 	}
@@ -150,6 +246,14 @@ public class JavaShorts implements Shorts {
 	public Result<List<String>> followers(String userId, String password) {
 		Log.info(() -> format("followers : userId = %s, pwd = %s\n", userId, password));
 
+		if (REDISCACHE) {
+			var cachedHits = jedis.get("followers:" + userId);
+			if (cachedHits != null) {
+				List<String> res = JSON.decode(cachedHits, new TypeReference<>() {});
+				return errorOrValue( okUser(userId, password), ok(res));
+			}
+		}
+
 		return errorOrResult( okUser(userId, password), user -> {
 			var query = format("SELECT f.follower FROM Following f WHERE f.followee = '%s'", userId);
 
@@ -159,6 +263,7 @@ public class JavaShorts implements Shorts {
 					.map(Following::getFollower)
 					.toList();
 
+			if (REDISCACHE) jedis.setex("followers:" + userId, 60, JSON.encode(followerIds));
 
 			return errorOrValue( okUser(userId, password), followerIds);
 		});
@@ -170,8 +275,20 @@ public class JavaShorts implements Shorts {
 
 		return errorOrResult( getShort(shortId), shrt -> {
 			return errorOrResult( okUser(userId, password), user -> {
+
 				var l = new Likes(userId, shortId, shrt.getOwnerId());
-				return errorOrVoid( okUser( userId, password), isLiked ? DB.insertOne( l ) : DB.deleteOne( l ));
+
+				var res = errorOrVoid( okUser( userId, password), isLiked ? DB.insertOne( l ) : DB.deleteOne( l ));
+
+				if (REDISCACHE) {
+					if (res.isOK()) {
+						if (isLiked)
+							jedis.incr(LIKES_PREFIX + shortId);
+						else if(jedis.get(LIKES_PREFIX + shortId) != null)
+							jedis.decr(LIKES_PREFIX + shortId);
+					}
+				}
+				return res;
 			});
 		});
 	}
@@ -182,7 +299,13 @@ public class JavaShorts implements Shorts {
 
 		return errorOrResult( getShort(shortId), shrt -> {
 
+			if (REDISCACHE) {
+				var likes = List.of(String.valueOf(getLikeCount(LIKES_PREFIX + shortId)));
+				return  errorOrValue(okUser( shrt.getOwnerId(), password ), likes);
+			}
+
 			return errorOrResult( okUser(shrt.getOwnerId(), password), user -> {
+
 				var query = format("SELECT l.userId FROM Likes l WHERE l.shortId = '%s'", shortId);
 
 				List<Likes> likes = DB.sql(query, Likes.class);
@@ -191,7 +314,6 @@ public class JavaShorts implements Shorts {
 						.map(Likes::getUserId)  // Assuming Short has a getId() method
 						.toList();
 
-				//return errorOrValue( okUser( shrt.getOwnerId(), password ), DB.sql(query, String.class));
 				return errorOrValue( okUser( shrt.getOwnerId(), password ), userIds );
 			});
 		});
@@ -200,6 +322,15 @@ public class JavaShorts implements Shorts {
 	@Override
 	public Result<List<String>> getFeed(String userId, String password) {
 		Log.info(() -> format("getFeed : userId = %s, pwd = %s\n", userId, password));
+
+		if (REDISCACHE) {
+			var cachedHits = jedis.get("getFeed:" + userId);
+			if (cachedHits != null) {
+				List<String> res = JSON.decode(cachedHits, new TypeReference<>() {});
+				return errorOrValue( okUser(userId, password), ok(res));
+			}
+		}
+
 
 		return errorOrResult( okUser(userId, password), user -> {
 			// Need to do sequential
@@ -216,7 +347,6 @@ public class JavaShorts implements Shorts {
 						f.followee = s.ownerId AND f.follower = '%s' 
 				ORDER BY s.timestamp DESC""";
 
-
 			var myShortsQuery = format("SELECT * FROM Short s WHERE l.ownerId = '%s'", userId);
 			List<Short> shorts = DB.sql(myShortsQuery, Short.class);
 
@@ -229,31 +359,19 @@ public class JavaShorts implements Shorts {
 				shorts.addAll(followingShorts);
 			}
 
-
-//		List<Short> shorts = DB.sql(format(QUERY_FMT, userId, userId), Short.class);
-//
 			List<String> feed = shorts.stream()
-					.map(s -> String.format("shortId: %s; timestamp:  %s", s.getShortId(), s.getTimestamp()))
+					.sorted(Comparator.comparing(Short::getTimestamp).reversed())
+					.map(s -> String.format("shortId: %s; timestamp: %s", s.getShortId(), s.getTimestamp()))
 					.toList();
 
-			Log.info("Feed size:  " + feed.size());
 
-			//return errorOrValue( okUser( userId, password), DB.sql( format(QUERY_FMT, userId, userId), String.class));
+			if (REDISCACHE) jedis.setex("getFeed:" + userId, 60, JSON.encode(feed));
+
 			return errorOrValue( okUser( userId, password), feed);
 		});
 	}
 
-	protected Result<User> okUser( String userId, String pwd) {
-		return JavaUsers.getInstance().getUser(userId, pwd);
-	}
 
-	private Result<Void> okUser( String userId ) {
-		var res = okUser( userId, "");
-		if( res.error() == FORBIDDEN )
-			return ok();
-		else
-			return error( res.error() );
-	}
 
 	@Override
 	public Result<Void> deleteAllShorts(String userId, String password, String token) {
@@ -261,8 +379,8 @@ public class JavaShorts implements Shorts {
 
 		return errorOrResult( okUser(userId, password), user -> {
 			// Later i need to add this back
-//		if( ! Token.isValid( token, userId ) )
-//			return error(FORBIDDEN);
+	//		if( ! Token.isValid( token, userId ) )
+	//			return error(FORBIDDEN);
 
 			if(COSMOS_DB) {
 				var myShortsQuery = format("SELECT * FROM Short s WHERE l.ownerId = '%s'", userId);
@@ -299,10 +417,8 @@ public class JavaShorts implements Shorts {
 					//delete likes
 					var query3 = format("DELETE Likes l WHERE l.ownerId = '%s' OR l.userId = '%s'", userId, userId);
 					hibernate.createQuery(query3, Likes.class).executeUpdate();
-
 				});
 			}
 		});
 	}
-
 }

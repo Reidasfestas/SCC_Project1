@@ -1,0 +1,35 @@
+
+# Expects:
+# http.codes.200 - 30
+# http.codes.409 - 10
+
+config:
+  target: "http://127.0.0.1:8080/tukano/rest"
+  phases:
+    - duration: 40
+      arrivalRate: 1
+      name: "Phase 1 - postUsers"
+      scenario: "Scenario 1"
+  payload:
+    path: "../data/users.csv"
+    order: sequence
+    skipHeader: true
+    delimiter: ","
+    skipEmptyLines: true
+    fields:
+      - "id"
+      - "pwd"
+      - "email"
+      - "displayName"
+scenarios:
+  - name: "Scenario 1"
+    flow:
+      - post:
+          url: "/users/"
+          headers:
+            Content-Type: application/json
+          json:
+            id: "{{ id }}"
+            pwd: "{{ pwd }}"
+            email: "{{ email }}"
+            displayName: "{{ displayName }}"
