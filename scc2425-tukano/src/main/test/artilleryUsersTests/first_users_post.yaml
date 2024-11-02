@@ -1,16 +1,15 @@
+
+# Expects:
+# http.codes.200 - 30
+# http.codes.409 - 10
+
 config:
   target: "http://127.0.0.1:8080/tukano/rest"
-  processor: "./usersTest.js"
   phases:
-    - duration: 3
+    - duration: 40
       arrivalRate: 1
       name: "Phase 1 - postUsers"
       scenario: "Scenario 1"
-
-    #- duration: 1
-    #  arrivalRate: 1
-    #  name: "Phase 2 - the rest"
-    #  scenario: "Scenario 2"
   payload:
     path: "../data/users.csv"
     order: sequence
@@ -22,7 +21,6 @@ config:
       - "pwd"
       - "email"
       - "displayName"
-
 scenarios:
   - name: "Scenario 1"
     flow:
@@ -35,18 +33,3 @@ scenarios:
             pwd: "{{ pwd }}"
             email: "{{ email }}"
             displayName: "{{ displayName }}"
-
-  #- name: "Scenario 2"
-  #  flow:
-  #    - put:
-  #        url: "/users/"
-  #        headers:
-  #          Content-Type: application/json
-  #          Accept: application/json
-  #        beforeRequest: "updateUser"
-  #    - get:
-  #        url: "/users/?query="
-  #        headers:
-  #          accept: application/json
-  #    - delete:
-  #        url: "/users/jdoe?pwd=password123"

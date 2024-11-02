@@ -1,0 +1,21 @@
+config:
+  target: http://127.0.0.1:8080/tukano/rest
+  phases:
+    - name: simple_blob_post
+      duration: 5
+      arrivalRate: 50
+scenarios:
+  - name: TuKanoRegister
+    flow:
+      - get:
+          url: /users/ijohnson?pwd=password9
+          headers:
+            Accept: application/json
+      - get:
+          url: /users/mbrown?pwd=password13
+          headers:
+            Accept: application/json
+      - get:
+          url: /users/?query=ee
+          headers:
+            Accept: application/json
