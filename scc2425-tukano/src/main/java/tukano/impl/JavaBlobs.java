@@ -20,7 +20,7 @@ public class JavaBlobs implements Blobs {
 
 	private static Blobs instance;
 	private static final Logger Log = Logger.getLogger(JavaBlobs.class.getName());
-	private static final boolean AZURE_STORAGE = false;
+	private static final boolean AZURE_STORAGE = true;
 
 	public String baseURI;
 	private BlobStorage storage;

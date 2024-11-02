@@ -6,7 +6,6 @@ import jakarta.persistence.Id;
 
 @Entity
 public class User {
-
 	@Id
 	@JsonProperty("id")
 	private String userId;

@@ -23,7 +23,7 @@ public class JavaUsers implements Users {
 
 	private static Users instance;
 
-	private static final boolean COSMOS_DB = false;
+	private static final boolean COSMOS_DB = true;
 	private static final String CONTAINER_NAME = "users";
 
 	synchronized public static Users getInstance() {
@@ -93,8 +93,20 @@ public class JavaUsers implements Users {
 
 	@Override
 	public Result<List<User>> searchUsers(String pattern) {
-		Log.info( () -> format("searchUsers : patterns = %s\n", pattern));
+		Log.info(() -> format("searchUsers : pattern = %s\n", pattern));
 
+		// Handle null or empty search pattern
+		if (pattern == null || pattern.trim().isEmpty()) {
+			var query = "SELECT * FROM User";  // Query to fetch all users if no pattern is provided
+			var hits = DB.sql(query, User.class)
+					.stream()
+					.map(User::copyWithoutPassword)
+					.toList();
+
+			return ok(hits);
+		}
+
+		// If pattern is not null or empty, proceed with search
 		var query = format("SELECT * FROM User u WHERE UPPER(u.userId) LIKE '%%%s%%'", pattern.toUpperCase());
 		var hits = DB.sql(query, User.class)
 				.stream()
@@ -103,6 +115,7 @@ public class JavaUsers implements Users {
 
 		return ok(hits);
 	}
+
 
 
 	private Result<User> validatedUserOrError( Result<User> res, String pwd ) {
