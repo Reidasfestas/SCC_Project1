@@ -150,26 +150,29 @@ public class JavaShorts implements Shorts {
 	public Result<List<String>> followers(String userId, String password) {
 		Log.info(() -> format("followers : userId = %s, pwd = %s\n", userId, password));
 
-		var query = format("SELECT f.follower FROM Following f WHERE f.followee = '%s'", userId);
+		return errorOrResult( okUser(userId, password), user -> {
+			var query = format("SELECT f.follower FROM Following f WHERE f.followee = '%s'", userId);
 
-		List<Following> shorts = DB.sql(query, Following.class);
+			List<Following> shorts = DB.sql(query, Following.class);
 
-		List<String> followerIds = shorts.stream()
-				.map(Following::getFollower)
-				.toList();
+			List<String> followerIds = shorts.stream()
+					.map(Following::getFollower)
+					.toList();
 
 
-		return errorOrValue( okUser(userId, password), followerIds);
+			return errorOrValue( okUser(userId, password), followerIds);
+		});
 	}
 
 	@Override
 	public Result<Void> like(String shortId, String userId, boolean isLiked, String password) {
 		Log.info(() -> format("like : shortId = %s, userId = %s, isLiked = %s, pwd = %s\n", shortId, userId, isLiked, password));
 
-
 		return errorOrResult( getShort(shortId), shrt -> {
-			var l = new Likes(userId, shortId, shrt.getOwnerId());
-			return errorOrVoid( okUser( userId, password), isLiked ? DB.insertOne( l ) : DB.deleteOne( l ));
+			return errorOrResult( okUser(userId, password), user -> {
+				var l = new Likes(userId, shortId, shrt.getOwnerId());
+				return errorOrVoid( okUser( userId, password), isLiked ? DB.insertOne( l ) : DB.deleteOne( l ));
+			});
 		});
 	}
 
@@ -179,16 +182,18 @@ public class JavaShorts implements Shorts {
 
 		return errorOrResult( getShort(shortId), shrt -> {
 
-			var query = format("SELECT l.userId FROM Likes l WHERE l.shortId = '%s'", shortId);
+			return errorOrResult( okUser(shrt.getOwnerId(), password), user -> {
+				var query = format("SELECT l.userId FROM Likes l WHERE l.shortId = '%s'", shortId);
 
-			List<Likes> likes = DB.sql(query, Likes.class);
+				List<Likes> likes = DB.sql(query, Likes.class);
 
-			List<String> userIds = likes.stream()
-					.map(Likes::getUserId)  // Assuming Short has a getId() method
-					.toList();
+				List<String> userIds = likes.stream()
+						.map(Likes::getUserId)  // Assuming Short has a getId() method
+						.toList();
 
-			//return errorOrValue( okUser( shrt.getOwnerId(), password ), DB.sql(query, String.class));
-			return errorOrValue( okUser( shrt.getOwnerId(), password ), userIds );
+				//return errorOrValue( okUser( shrt.getOwnerId(), password ), DB.sql(query, String.class));
+				return errorOrValue( okUser( shrt.getOwnerId(), password ), userIds );
+			});
 		});
 	}
 
@@ -196,13 +201,14 @@ public class JavaShorts implements Shorts {
 	public Result<List<String>> getFeed(String userId, String password) {
 		Log.info(() -> format("getFeed : userId = %s, pwd = %s\n", userId, password));
 
-		// Need to do sequential
-		// First do a query for my own shorts
-		// Then do a query for the the people i follow
-		// Then get the shorts of the people i follow
-		// Then join my shorts with the ones from the people i follow
+		return errorOrResult( okUser(userId, password), user -> {
+			// Need to do sequential
+			// First do a query for my own shorts
+			// Then do a query for the the people i follow
+			// Then get the shorts of the people i follow
+			// Then join my shorts with the ones from the people i follow
 
-		final var QUERY_FMT = """
+			final var QUERY_FMT = """
 				SELECT s.id, s.timestamp FROM Short s WHERE	s.ownerId = '%s'				
 				UNION			
 				SELECT s.id, s.timestamp FROM Short s, Following f 
@@ -211,29 +217,30 @@ public class JavaShorts implements Shorts {
 				ORDER BY s.timestamp DESC""";
 
 
-		var myShortsQuery = format("SELECT * FROM Short s WHERE l.ownerId = '%s'", userId);
-		List<Short> shorts = DB.sql(myShortsQuery, Short.class);
+			var myShortsQuery = format("SELECT * FROM Short s WHERE l.ownerId = '%s'", userId);
+			List<Short> shorts = DB.sql(myShortsQuery, Short.class);
 
-		var myFollowingQuery = format("SELECT * FROM Following f WHERE f.follower = '%s'", userId);
-		List<Following> followings = DB.sql(myFollowingQuery, Following.class);
+			var myFollowingQuery = format("SELECT * FROM Following f WHERE f.follower = '%s'", userId);
+			List<Following> followings = DB.sql(myFollowingQuery, Following.class);
 
-		for(Following f : followings) {
-			var myFollowingShortsQuery = format("SELECT * FROM Short s WHERE s.ownerId = '%s'", f.getFollowee());
-			List<Short> followingShorts = DB.sql(myFollowingShortsQuery, Short.class);
-			shorts.addAll(followingShorts);
-		}
+			for(Following f : followings) {
+				var myFollowingShortsQuery = format("SELECT * FROM Short s WHERE s.ownerId = '%s'", f.getFollowee());
+				List<Short> followingShorts = DB.sql(myFollowingShortsQuery, Short.class);
+				shorts.addAll(followingShorts);
+			}
 
 
 //		List<Short> shorts = DB.sql(format(QUERY_FMT, userId, userId), Short.class);
 //
-		List<String> feed = shorts.stream()
-				.map(s -> String.format("shortId: %s; timestamp:  %s", s.getShortId(), s.getTimestamp()))
-				.toList();
+			List<String> feed = shorts.stream()
+					.map(s -> String.format("shortId: %s; timestamp:  %s", s.getShortId(), s.getTimestamp()))
+					.toList();
 
-		Log.info("Feed size:  " + feed.size());
+			Log.info("Feed size:  " + feed.size());
 
-		//return errorOrValue( okUser( userId, password), DB.sql( format(QUERY_FMT, userId, userId), String.class));
-		return errorOrValue( okUser( userId, password), feed);
+			//return errorOrValue( okUser( userId, password), DB.sql( format(QUERY_FMT, userId, userId), String.class));
+			return errorOrValue( okUser( userId, password), feed);
+		});
 	}
 
 	protected Result<User> okUser( String userId, String pwd) {
@@ -252,50 +259,50 @@ public class JavaShorts implements Shorts {
 	public Result<Void> deleteAllShorts(String userId, String password, String token) {
 		Log.info(() -> format("deleteAllShorts : userId = %s, password = %s, token = %s\n", userId, password, token));
 
-
-		// Later i need to add this back
+		return errorOrResult( okUser(userId, password), user -> {
+			// Later i need to add this back
 //		if( ! Token.isValid( token, userId ) )
 //			return error(FORBIDDEN);
 
-		if(COSMOS_DB) {
-			var myShortsQuery = format("SELECT * FROM Short s WHERE l.ownerId = '%s'", userId);
-			List<Short> shorts = DB.sql(myShortsQuery, Short.class);
-			for(Short s : shorts) {
-				DB.deleteOne(s);
+			if(COSMOS_DB) {
+				var myShortsQuery = format("SELECT * FROM Short s WHERE l.ownerId = '%s'", userId);
+				List<Short> shorts = DB.sql(myShortsQuery, Short.class);
+				for(Short s : shorts) {
+					DB.deleteOne(s);
+				}
+
+				var myFollowingsQuery = format("SELECT * FROM Following f WHERE f.follower = '%s' OR f.followee = '%s'", userId, userId);
+				List<Following> followings = DB.sql(myFollowingsQuery, Following.class);
+				for(Following f : followings) {
+					DB.deleteOne(f);
+				}
+
+				var myLikesQuery = format("SELECT * FROM Likes l WHERE l.ownerId = '%s' OR l.userId = '%s'", userId, userId);
+				List<Likes> likes = DB.sql(myLikesQuery, Likes.class);
+				for(Likes l : likes) {
+					DB.deleteOne(l);
+				}
+
+				return Result.ok();
 			}
+			else {
+				return DB.transaction( (hibernate) -> {
 
-			var myFollowingsQuery = format("SELECT * FROM Following f WHERE f.follower = '%s' OR f.followee = '%s'", userId, userId);
-			List<Following> followings = DB.sql(myFollowingsQuery, Following.class);
-			for(Following f : followings) {
-				DB.deleteOne(f);
+					//delete shorts
+					var query1 = format("DELETE Short s WHERE s.ownerId = '%s'", userId);
+					hibernate.createQuery(query1, Short.class).executeUpdate();
+
+					//delete follows
+					var query2 = format("DELETE Following f WHERE f.follower = '%s' OR f.followee = '%s'", userId, userId);
+					hibernate.createQuery(query2, Following.class).executeUpdate();
+
+					//delete likes
+					var query3 = format("DELETE Likes l WHERE l.ownerId = '%s' OR l.userId = '%s'", userId, userId);
+					hibernate.createQuery(query3, Likes.class).executeUpdate();
+
+				});
 			}
-
-			var myLikesQuery = format("SELECT * FROM Likes l WHERE l.ownerId = '%s' OR l.userId = '%s'", userId, userId);
-			List<Likes> likes = DB.sql(myLikesQuery, Likes.class);
-			for(Likes l : likes) {
-				DB.deleteOne(l);
-			}
-
-			return Result.ok();
-		}
-		else {
-			return DB.transaction( (hibernate) -> {
-
-				//delete shorts
-				var query1 = format("DELETE Short s WHERE s.ownerId = '%s'", userId);
-				hibernate.createQuery(query1, Short.class).executeUpdate();
-
-				//delete follows
-				var query2 = format("DELETE Following f WHERE f.follower = '%s' OR f.followee = '%s'", userId, userId);
-				hibernate.createQuery(query2, Following.class).executeUpdate();
-
-				//delete likes
-				var query3 = format("DELETE Likes l WHERE l.ownerId = '%s' OR l.userId = '%s'", userId, userId);
-				hibernate.createQuery(query3, Likes.class).executeUpdate();
-
-			});
-		}
-
+		});
 	}
 
 }

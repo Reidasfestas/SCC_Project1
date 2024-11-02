@@ -29,7 +29,6 @@ public class CosmosDatabase implements Database {
     private static final String CONNECTION_URL = "https://cosmos60019.documents.azure.com:443/"; // replace with your own
     private static final String DB_KEY = "93uOJS9hdqnvdRHVJA4yyXEBY3SUv2LUSRBCyldRcQeQRrME1ECv0BQ7EWtkhv4RAgH1Tx8LpD7cACDboOyh4w==";
     private static final String DB_NAME = "cosmosdb60019";
-    private String CONTAINER;
 
     private Map<Class<?>, CosmosContainer> containerMap = new HashMap<>();
 
