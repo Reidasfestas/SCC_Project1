@@ -38,7 +38,7 @@ public class JavaShorts implements Shorts {
 
 	private static Shorts instance;
 
-	private static final boolean COSMOS_DB = true;
+	private static final boolean COSMOS_DB = false;
 
 	private static final boolean REDISCACHE = false;
 	private static Jedis jedis;

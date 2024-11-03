@@ -119,6 +119,13 @@
 			<version>5.0.1</version>
 		</dependency>
 
+
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<version>42.7.4</version> <!-- Use the latest version available -->
+		</dependency>
+
 		<!-- Rest of dependencies -->
 
 
