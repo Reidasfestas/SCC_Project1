@@ -90,7 +90,12 @@ public class FilesystemStorage implements BlobStorage {
 		}
 		return ok();
 	}
-	
+
+	@Override
+	public Result<Void> deleteAll(String path) {
+		return delete(path);
+	}
+
 	private File toFile(String path) {
 		var res = new File( rootDir + path );
 		

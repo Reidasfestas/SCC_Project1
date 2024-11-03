@@ -236,6 +236,10 @@ public class JavaShorts implements Shorts {
 	public Result<Void> follow(String userId1, String userId2, boolean isFollowing, String password) {
 		Log.info(() -> format("follow : userId1 = %s, userId2 = %s, isFollowing = %s, pwd = %s\n", userId1, userId2, isFollowing, password));
 
+		if(userId1 == null || userId2 == null || userId1.equals(userId2)) {
+			return error(BAD_REQUEST);
+		}
+
 		return errorOrResult( okUser(userId1, password), user -> {
 			var f = new Following(userId1, userId2);
 			return errorOrVoid( okUser( userId2), isFollowing ? DB.insertOne( f ) : DB.deleteOne( f ));
@@ -374,17 +378,11 @@ public class JavaShorts implements Shorts {
 	// TODO: Check Cache logic for this method
 
 	@Override
-	public Result<Void> deleteAllShorts(String userId, String password, String token) {
-		Log.info(() -> format("deleteAllShorts : userId = %s, password = %s, token = %s\n", userId, password, token));
+	public Result<Void> deleteAllShorts(String userId, String password) {
+		Log.info(() -> format("deleteAllShorts : userId = %s\n", userId));
 
 		return errorOrResult( okUser(userId, password), user -> {
-			// Later i need to add this back
-	//		if( ! Token.isValid( token, userId ) )
-	//			return error(FORBIDDEN);
-
 			if(COSMOS_DB) {
-
-
 				var myFollowingsQuery = format("SELECT * FROM Following f WHERE f.follower = '%s' OR f.followee = '%s'", userId, userId);
 				List<Following> followings = DB.sql(myFollowingsQuery, Following.class);
 				for(Following f : followings) {

@@ -75,6 +75,6 @@ public interface RestShorts {
 	
 	@DELETE
 	@Path("/{" + USER_ID + "}" + SHORTS)
-	void deleteAllShorts(@PathParam(USER_ID) String userId, @QueryParam(PWD) String password, @QueryParam(TOKEN) String token);
+	void deleteAllShorts(@PathParam(USER_ID) String userId, @QueryParam(PWD) String password);
 
 }

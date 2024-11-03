@@ -68,7 +68,7 @@ public class JavaUsers implements Users {
 
 	@Override
 	public Result<User> getUser(String userId, String pwd) {
-		Log.info( () -> format("getUser : userId = %s, pwd = %s\n", userId, pwd));
+		Log.info( () -> format("getUser : userId = %s\n", userId));
 
 		if (userId == null)
 			return error(BAD_REQUEST);
@@ -90,7 +90,7 @@ public class JavaUsers implements Users {
 
 	@Override
 	public Result<User> updateUser(String userId, String pwd, User other) {
-		Log.info(() -> format("updateUser : userId = %s, pwd = %s, user: %s\n", userId, pwd, other));
+		Log.info(() -> format("updateUser : userId = %s, user: %s\n", userId, other));
 
 		if (badUpdateUserInfo(userId, pwd, other))
 			return error(BAD_REQUEST);
@@ -106,7 +106,7 @@ public class JavaUsers implements Users {
 
 	@Override
 	public Result<User> deleteUser(String userId, String pwd) {
-		Log.info(() -> format("deleteUser : userId = %s, pwd = %s\n", userId, pwd));
+		Log.info(() -> format("deleteUser : userId = %s\n", userId));
 
 		if (userId == null || pwd == null )
 			return error(BAD_REQUEST);
@@ -114,10 +114,13 @@ public class JavaUsers implements Users {
 		return errorOrResult( validatedUserOrError(DB.getOne( userId, User.class), pwd), user -> {
 
 			// Delete user shorts and related info asynchronously in a separate thread
-			Executors.defaultThreadFactory().newThread( () -> {
-				JavaShorts.getInstance().deleteAllShorts(userId, pwd, Token.get(userId));
-				JavaBlobs.getInstance().deleteAllBlobs(userId, Token.get(userId));
-			}).start();
+//			Executors.defaultThreadFactory().newThread( () -> {
+//				JavaBlobs.getInstance().deleteAllBlobs(userId, pwd);
+//				JavaShorts.getInstance().deleteAllShorts(userId, pwd);
+//			}).start();
+
+			JavaBlobs.getInstance().deleteAllBlobs(userId, pwd);
+			JavaShorts.getInstance().deleteAllShorts(userId, pwd);
 
 			var res = DB.deleteOne( user);
 			if (REDISCACHE && res.isOK())
@@ -160,7 +163,6 @@ public class JavaUsers implements Users {
 
 		return ok(hits);
 	}
-
 
 
 	private Result<User> validatedUserOrError( Result<User> res, String pwd ) {

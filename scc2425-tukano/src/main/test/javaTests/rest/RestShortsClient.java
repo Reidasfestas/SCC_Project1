@@ -108,13 +108,12 @@ public class RestShortsClient extends RestClient implements Shorts{
 				.get(), new GenericType<List<String>>() {});
 	}
 
-	public Result<Void> _deleteAllShorts(String userId, String password, String token) {
+	public Result<Void> _deleteAllShorts(String userId, String password) {
 		return super.toJavaResult(
 				target
 				.path(userId)
 				.path(RestShorts.SHORTS)
 				.queryParam(RestShorts.PWD, password )
-				.queryParam(RestShorts.TOKEN, token )
 				.request()
 				.delete());
 	}
@@ -173,7 +172,7 @@ public class RestShortsClient extends RestClient implements Shorts{
 	}
 
 	@Override
-	public Result<Void> deleteAllShorts(String userId, String password, String token) {
-		return super.reTry( () -> _deleteAllShorts(userId, password, token));
+	public Result<Void> deleteAllShorts(String userId, String password) {
+		return super.reTry( () -> _deleteAllShorts(userId, password));
 	}
 }

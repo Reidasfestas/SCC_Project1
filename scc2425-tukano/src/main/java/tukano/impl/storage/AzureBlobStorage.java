@@ -19,16 +19,27 @@ import tukano.api.Result;
 import utils.Hash;
 public class AzureBlobStorage implements BlobStorage{
 
-    private final BlobContainerClient containerClient;
+    private final BlobContainerClient primaryContainerClient;
+    private BlobContainerClient secondaryContainerClient = null;
 
-    private static final String storageConnectionString = "DefaultEndpointsProtocol=https;AccountName=sto60019northeurope;AccountKey=/Gk4NLhMWIQawS7pW3vNQbli+hIt3avvoNZGZ6LziM8opgT2YSGglYxAQLXWr4+zXfnCQoarqSOE+AStD2u5rg==;EndpointSuffix=core.windows.net";
+    private static final String primaryStorageConnectionString = "DefaultEndpointsProtocol=https;AccountName=sto60019northeurope;AccountKey=/Gk4NLhMWIQawS7pW3vNQbli+hIt3avvoNZGZ6LziM8opgT2YSGglYxAQLXWr4+zXfnCQoarqSOE+AStD2u5rg==;EndpointSuffix=core.windows.net";
+    private static final String secondaryStorageConnectionString = "DefaultEndpointsProtocol=https;AccountName=sto60019northeurope-secondary;AccountKey=/Gk4NLhMWIQawS7pW3vNQbli+hIt3avvoNZGZ6LziM8opgT2YSGglYxAQLXWr4+zXfnCQoarqSOE+AStD2u5rg==;EndpointSuffix=core.windows.net";
+
     private static final String BLOBS_CONTAINER_NAME = "shorts";
+    private static boolean SECONDARY_REGION = true;
 
     public AzureBlobStorage() {
-        containerClient = new BlobContainerClientBuilder()
-                .connectionString(storageConnectionString)
+        primaryContainerClient = new BlobContainerClientBuilder()
+                .connectionString(primaryStorageConnectionString)
                 .containerName(BLOBS_CONTAINER_NAME)
                 .buildClient();
+
+        if(SECONDARY_REGION) {
+            secondaryContainerClient = new BlobContainerClientBuilder()
+                    .connectionString(secondaryStorageConnectionString)
+                    .containerName(BLOBS_CONTAINER_NAME)
+                    .buildClient();
+        }
     }
 
     @Override
@@ -36,7 +47,7 @@ public class AzureBlobStorage implements BlobStorage{
         if (path == null)
             return error(BAD_REQUEST);
 
-        BlobClient blob = containerClient.getBlobClient(path);
+        BlobClient blob = primaryContainerClient.getBlobClient(path);
         if (blob.exists()) {
             if (Arrays.equals(Hash.sha256(bytes), Hash.sha256(read(path).value())))
                 return ok();
@@ -52,23 +63,45 @@ public class AzureBlobStorage implements BlobStorage{
 
     @Override
     public Result<byte[]> read(String path) {
-        if (path == null)
+        if (path == null) {
             return error(BAD_REQUEST);
+        }
 
-        BlobClient blob = containerClient.getBlobClient(path);
-        if(!blob.exists() )
-            return error(NOT_FOUND);
+        try {
+            // Attempt to read from the primary region
+            BlobClient blob = primaryContainerClient.getBlobClient(path);
+            if (!blob.exists()) {
+                return error(NOT_FOUND);
+            }
 
-        var bytes = blob.downloadContent().toBytes();
-        return bytes != null ? ok( bytes ) : error( INTERNAL_ERROR );
+            var bytes = blob.downloadContent().toBytes();
+            if (bytes != null) {
+                return ok(bytes);
+            }
+
+            throw new Exception("Failed to read from primary region.");
+        } catch (Exception e) {
+            // If primary read fails, attempt to read from the secondary region
+            if (SECONDARY_REGION) {
+                BlobClient blob = secondaryContainerClient.getBlobClient(path);
+                if (!blob.exists()) {
+                    return error(NOT_FOUND);
+                }
+
+                var bytes = blob.downloadContent().toBytes();
+                return bytes != null ? ok(bytes) : error(INTERNAL_ERROR);
+            }
+        }
+        return error(INTERNAL_ERROR);
     }
+
 
     @Override
     public Result<Void> read(String path, Consumer<byte[]> sink) {
         if (path == null)
             return error(BAD_REQUEST);
 
-        BlobClient blob = containerClient.getBlobClient(path);
+        BlobClient blob = primaryContainerClient.getBlobClient(path);
         if(!blob.exists() )
             return error(NOT_FOUND);
 
@@ -83,11 +116,32 @@ public class AzureBlobStorage implements BlobStorage{
         if (path == null)
             return error(BAD_REQUEST);
 
-        BlobClient blob = containerClient.getBlobClient(path);
+        BlobClient blob = primaryContainerClient.getBlobClient(path);
         if (blob.exists()) {
             blob.delete();
             return Result.ok();
         } else
             return error(NOT_FOUND);
     }
+
+    @Override
+    public Result<Void> deleteAll(String path) {
+        if (path == null) {
+            return error(BAD_REQUEST);
+        }
+        if (!path.endsWith("/")) {
+            path += "/";
+        }
+        try {
+            primaryContainerClient.listBlobsByHierarchy(path).forEach(blobItem -> {
+                BlobClient blobClient = primaryContainerClient.getBlobClient(blobItem.getName());
+                blobClient.delete();
+            });
+
+            return ok();
+        } catch (Exception e) {
+            return error(INTERNAL_ERROR);
+        }
+    }
+
 }

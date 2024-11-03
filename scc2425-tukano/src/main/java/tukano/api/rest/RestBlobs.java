@@ -11,6 +11,8 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 
+import static tukano.api.rest.RestUsers.PWD;
+
 @Path(RestBlobs.PATH)
 public interface RestBlobs {
 	
@@ -38,5 +40,5 @@ public interface RestBlobs {
 
 	@DELETE
 	@Path("/{" + USER_ID + "}/" + BLOBS)
-	void deleteAllBlobs(@PathParam(USER_ID) String userId, @QueryParam(TOKEN) String token );		
+	void deleteAllBlobs(@PathParam(USER_ID) String userId, @QueryParam(PWD) String pwd );
 }
