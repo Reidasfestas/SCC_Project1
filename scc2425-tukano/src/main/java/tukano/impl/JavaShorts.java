@@ -10,6 +10,7 @@ import static tukano.api.Result.ErrorCode.BAD_REQUEST;
 import static tukano.api.Result.ErrorCode.FORBIDDEN;
 import static utils.DB.getOne;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -346,8 +347,8 @@ public class JavaShorts implements Shorts {
 						f.followee = s.ownerId AND f.follower = '%s' 
 				ORDER BY s.timestamp DESC""";
 
-			var myShortsQuery = format("SELECT * FROM Short s WHERE l.ownerId = '%s'", userId);
-			List<Short> shorts = DB.sql(myShortsQuery, Short.class);
+			var myShortsQuery = format("SELECT * FROM Short s WHERE s.ownerId = '%s'", userId);
+			List<Short> shorts = new ArrayList<>(DB.sql(myShortsQuery, Short.class));
 
 			var myFollowingQuery = format("SELECT * FROM Following f WHERE f.follower = '%s'", userId);
 			List<Following> followings = DB.sql(myFollowingQuery, Following.class);
@@ -382,11 +383,7 @@ public class JavaShorts implements Shorts {
 	//			return error(FORBIDDEN);
 
 			if(COSMOS_DB) {
-				var myShortsQuery = format("SELECT * FROM Short s WHERE l.ownerId = '%s'", userId);
-				List<Short> shorts = DB.sql(myShortsQuery, Short.class);
-				for(Short s : shorts) {
-					DB.deleteOne(s);
-				}
+
 
 				var myFollowingsQuery = format("SELECT * FROM Following f WHERE f.follower = '%s' OR f.followee = '%s'", userId, userId);
 				List<Following> followings = DB.sql(myFollowingsQuery, Following.class);
@@ -398,6 +395,13 @@ public class JavaShorts implements Shorts {
 				List<Likes> likes = DB.sql(myLikesQuery, Likes.class);
 				for(Likes l : likes) {
 					DB.deleteOne(l);
+				}
+
+				var myShortsQuery = format("SELECT * FROM Short s WHERE s.ownerId = '%s'", userId);
+				List<Short> shorts = DB.sql(myShortsQuery, Short.class);
+
+				for(Short s : shorts) {
+					DB.deleteOne(s);
 				}
 
 				return Result.ok();
