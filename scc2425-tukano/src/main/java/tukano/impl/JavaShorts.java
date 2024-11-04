@@ -17,10 +17,11 @@ import java.util.UUID;
 import java.util.logging.Logger;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import AzureSetUp.AzureProperties;
 import redis.clients.jedis.Jedis;
 import tukano.api.Blobs;
 import tukano.api.Result;
-import java.util.logging.Logger;
+
 import java.util.stream.Collectors;
 
 import tukano.api.Short;
@@ -28,7 +29,6 @@ import tukano.api.Shorts;
 import tukano.api.User;
 import tukano.impl.data.Following;
 import tukano.impl.data.Likes;
-import tukano.impl.rest.TukanoRestServer;
 import utils.DB;
 import utils.JSON;
 import utils.RedisCache;
@@ -54,13 +54,13 @@ public class JavaShorts implements Shorts {
 	}
 
 	private JavaShorts() {
-		if(COSMOS_DB) {
+		if(AzureProperties.getInstance().isShortsStorageEnabled()) {
 			DB.configureCosmosDB();
 		}
 		else {
 			DB.configureHibernateDB();
 		}
-		if (REDISCACHE)
+		if (AzureProperties.getInstance().isCacheEnabled())
 			jedis = RedisCache.getCachePool().getResource();
 	}
 
@@ -109,12 +109,12 @@ public class JavaShorts implements Shorts {
 
 			var shortId = format("%s+%s", userId, UUID.randomUUID());
 			String blobUrl;
-			if(COSMOS_DB) blobUrl = format("%s/%s/%s", TukanoMainApplication.serverURI, Blobs.NAME, shortId);
-			else blobUrl = format("%s/%s/%s", TukanoRestServer.serverURI, Blobs.NAME, shortId);
+			if(AzureProperties.getInstance().isShortsStorageEnabled()) blobUrl = format("%s/%s/%s", TukanoMainApplication.serverURI, Blobs.NAME, shortId);
+			else blobUrl = format("%s/%s/%s", TukanoMainApplication.serverURI, Blobs.NAME, shortId);
 			var shrt = new Short(shortId, userId, blobUrl);
 
 			var res = DB.insertOne(shrt);
-			if (REDISCACHE) {
+			if (AzureProperties.getInstance().isCacheEnabled()) {
 				if (res.isOK())
 					cacheShrt(res.value().getShortId(), JSON.encode(res.value()));
 			}
@@ -132,7 +132,7 @@ public class JavaShorts implements Shorts {
 
 		List<Long> likes;
 
-		if (REDISCACHE) {
+		if (AzureProperties.getInstance().isCacheEnabled()) {
 			likes = List.of((long) getLikeCount(LIKES_PREFIX + shortId));
 
 			var shrtRes = jedis.get("shrt:" + shortId);
@@ -163,7 +163,7 @@ public class JavaShorts implements Shorts {
 
 			return errorOrResult(okUser(shrt.getOwnerId(), password), user -> {
 
-				if (COSMOS_DB) {
+				if (AzureProperties.getInstance().isShortsStorageEnabled()) {
 					var query = format("select l.id FROM Likes l WHERE l.shortId = '%s'", shortId);
 					List<Likes> likes = DB.sql(query, Likes.class);
 
@@ -171,7 +171,7 @@ public class JavaShorts implements Shorts {
 
 					for (Likes like : likes) {
 						var res = DB.deleteOne(like);
-						if (REDISCACHE && res.isOK()) {
+						if (AzureProperties.getInstance().isCacheEnabled() && res.isOK()) {
 							jedis.decr(LIKES_PREFIX + shortId);
 						}
 					}
@@ -179,7 +179,7 @@ public class JavaShorts implements Shorts {
 					JavaBlobs.getInstance().delete(shrt.getBlobUrl(), Token.get());
 					var res = DB.deleteOne(shrt);
 
-					if (REDISCACHE && res.isOK()) {
+					if (AzureProperties.getInstance().isCacheEnabled() && res.isOK()) {
 						deleteCachedShrt(shortId, JSON.encode(res.value()));
 
 						jedis.del(LIKES_PREFIX + shortId);
@@ -195,7 +195,7 @@ public class JavaShorts implements Shorts {
 						hibernate.createNativeQuery(query, Likes.class).executeUpdate();
 
 						var res = JavaBlobs.getInstance().delete(shrt.getBlobUrl(), Token.get());
-						if (REDISCACHE && res.isOK()) {
+						if (AzureProperties.getInstance().isCacheEnabled() && res.isOK()) {
 							deleteCachedShrt(shortId, JSON.encode(res.value()));
 
 							jedis.del(LIKES_PREFIX + shortId);
@@ -211,7 +211,7 @@ public class JavaShorts implements Shorts {
 	public Result<List<String>> getShorts(String userId) {
 		Log.info(() -> format("getShorts : userId = %s\n", userId));
 
-		if (REDISCACHE) {
+		if (AzureProperties.getInstance().isCacheEnabled()) {
 			var cachedHits = jedis.get("getShorts:" + userId);
 			if (cachedHits != null) {
 				List<String> res = JSON.decode(cachedHits, new TypeReference<>() {});
@@ -226,7 +226,7 @@ public class JavaShorts implements Shorts {
 				.map(Short::getShortId)
 				.collect(Collectors.toList());
 
-		if (REDISCACHE)
+		if (AzureProperties.getInstance().isCacheEnabled())
 			jedis.setex("getShorts:" + userId, 60, JSON.encode(shortIds));
 
 		return errorOrValue(okUser(userId), shortIds);
@@ -250,7 +250,7 @@ public class JavaShorts implements Shorts {
 	public Result<List<String>> followers(String userId, String password) {
 		Log.info(() -> format("followers : userId = %s, pwd = %s\n", userId, password));
 
-		if (REDISCACHE) {
+		if (AzureProperties.getInstance().isCacheEnabled()) {
 			var cachedHits = jedis.get("followers:" + userId);
 			if (cachedHits != null) {
 				List<String> res = JSON.decode(cachedHits, new TypeReference<>() {});
@@ -267,7 +267,7 @@ public class JavaShorts implements Shorts {
 					.map(Following::getFollower)
 					.toList();
 
-			if (REDISCACHE) jedis.setex("followers:" + userId, 60, JSON.encode(followerIds));
+			if (AzureProperties.getInstance().isCacheEnabled()) jedis.setex("followers:" + userId, 60, JSON.encode(followerIds));
 
 			return errorOrValue( okUser(userId, password), followerIds);
 		});
@@ -284,7 +284,7 @@ public class JavaShorts implements Shorts {
 
 				var res = errorOrVoid( okUser( userId, password), isLiked ? DB.insertOne( l ) : DB.deleteOne( l ));
 
-				if (REDISCACHE) {
+				if (AzureProperties.getInstance().isCacheEnabled()) {
 					if (res.isOK()) {
 						if (isLiked)
 							jedis.incr(LIKES_PREFIX + shortId);
@@ -303,7 +303,7 @@ public class JavaShorts implements Shorts {
 
 		return errorOrResult( getShort(shortId), shrt -> {
 
-			if (REDISCACHE) {
+			if (AzureProperties.getInstance().isCacheEnabled()) {
 				var likes = List.of(String.valueOf(getLikeCount(LIKES_PREFIX + shortId)));
 				return  errorOrValue(okUser( shrt.getOwnerId(), password ), likes);
 			}
@@ -327,7 +327,7 @@ public class JavaShorts implements Shorts {
 	public Result<List<String>> getFeed(String userId, String password) {
 		Log.info(() -> format("getFeed : userId = %s, pwd = %s\n", userId, password));
 
-		if (REDISCACHE) {
+		if (AzureProperties.getInstance().isCacheEnabled()) {
 			var cachedHits = jedis.get("getFeed:" + userId);
 			if (cachedHits != null) {
 				List<String> res = JSON.decode(cachedHits, new TypeReference<>() {});
@@ -369,7 +369,7 @@ public class JavaShorts implements Shorts {
 					.toList();
 
 
-			if (REDISCACHE) jedis.setex("getFeed:" + userId, 60, JSON.encode(feed));
+			if (AzureProperties.getInstance().isCacheEnabled()) jedis.setex("getFeed:" + userId, 60, JSON.encode(feed));
 
 			return errorOrValue( okUser( userId, password), feed);
 		});
@@ -382,7 +382,7 @@ public class JavaShorts implements Shorts {
 		Log.info(() -> format("deleteAllShorts : userId = %s\n", userId));
 
 		return errorOrResult( okUser(userId, password), user -> {
-			if(COSMOS_DB) {
+            if(AzureProperties.getInstance().isShortsStorageEnabled()) {
 				var myFollowingsQuery = format("SELECT * FROM Following f WHERE f.follower = '%s' OR f.followee = '%s'", userId, userId);
 				List<Following> followings = DB.sql(myFollowingsQuery, Following.class);
 				for(Following f : followings) {

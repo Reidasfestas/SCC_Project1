@@ -4,10 +4,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import utils.CosmosContainerName;
 
 @Entity
@@ -16,12 +13,15 @@ public class Likes {
 
 	@Id
 	@JsonProperty("id")
+	@Column(name = "id")
 	String id;
 	
-	@Id 
+	@Id
+	@Column(name = "userId")
 	String userId;
 	
-	@Id 
+	@Id
+	@Column(name = "shortId")
 	String shortId;
 	
 	public String getOwnerId() {
@@ -32,6 +32,7 @@ public class Likes {
 		this.ownerId = ownerId;
 	}
 
+	@Column(name = "ownerId")
 	String ownerId;
 	
 	public Likes() {}

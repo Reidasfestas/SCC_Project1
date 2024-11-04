@@ -16,7 +16,7 @@ public class DB {
 	}
 
 	public static void configureHibernateDB() {
-		database = new HibernateDatabase();
+		database = HibernateDatabase.getInstance();
 	}
 
 	public static void configureCosmosDB() {

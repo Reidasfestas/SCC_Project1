@@ -3,6 +3,7 @@ package tukano.impl.data;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import utils.CosmosContainerName;
@@ -13,12 +14,15 @@ public class Following{
 
 	@Id
 	@JsonProperty("id")
+	@Column(name = "id")
 	String id;
 
-	@Id 
+	@Id
+	@Column(name = "follower")
 	String follower;
 	
-	@Id 
+	@Id
+	@Column(name = "followee")
 	String followee;
 
 

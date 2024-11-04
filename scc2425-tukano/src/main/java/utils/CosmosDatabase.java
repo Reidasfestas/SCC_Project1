@@ -12,12 +12,10 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
 
-import com.azure.cosmos.util.CosmosPagedIterable;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import AzureSetUp.AzureProperties;
 import tukano.api.Result;
 import tukano.api.Short;
 import tukano.api.User;
-import tukano.impl.JavaUsers;
 import org.hibernate.Session;
 import tukano.impl.data.Following;
 import tukano.impl.data.Likes;
@@ -44,8 +42,8 @@ public class CosmosDatabase implements Database {
             return instance;
 
         CosmosClient client = new CosmosClientBuilder()
-                .endpoint(CONNECTION_URL)
-                .key(DB_KEY)
+                .endpoint(AzureProperties.getCosmosDBUrl())
+                .key(AzureProperties.getCosmosDBKey())
                 //.directMode()
                 .gatewayMode()
                 // replace by .directMode() for better performance
@@ -70,7 +68,7 @@ public class CosmosDatabase implements Database {
     private synchronized void init() {
         if( db != null)
             return;
-        db = client.getDatabase(DB_NAME);
+        db = client.getDatabase(AzureProperties.getCosmosDBDatabase());
         containerMap.put(User.class, db.getContainer("users"));
         containerMap.put(Short.class, db.getContainer("shorts"));
         containerMap.put(Likes.class, db.getContainer("likes"));

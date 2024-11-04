@@ -2,6 +2,7 @@ package tukano.api;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import tukano.impl.Token;
@@ -22,11 +23,20 @@ public class Short {
 
 	@Id
 	@JsonProperty("id")
+	@Column(name = "shortId")
 	@JsonAlias("shortId")
 	String shortId;
+
+	@Column(name = "ownerId")
 	String ownerId;
+
+	@Column(name = "blobUrl")
 	String blobUrl;
+
+	@Column(name = "timestamp")
 	long timestamp;
+
+	@Column(name = "totalLikes")
 	int totalLikes;
 
 	public Short() {}
