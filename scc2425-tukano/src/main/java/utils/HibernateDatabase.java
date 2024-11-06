@@ -9,6 +9,17 @@ import org.hibernate.Session;
 
 public class HibernateDatabase implements Database {
 
+    private static HibernateDatabase instance;
+    //private static Hibernate hibernateDB;
+
+    synchronized public static HibernateDatabase getInstance() {
+        if (instance == null) {
+            instance = new HibernateDatabase();
+            //hibernateDB = Hibernate.getInstance();
+        }
+        return instance;
+    }
+
     @Override
     public DbTypes getDbType() {
         return DbTypes.LOCAL;

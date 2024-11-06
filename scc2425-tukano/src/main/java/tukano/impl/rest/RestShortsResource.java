@@ -58,7 +58,7 @@ public class RestShortsResource extends RestResource implements RestShorts {
 	}
 
 	@Override
-	public void deleteAllShorts(String userId, String password, String token) {
-		super.resultOrThrow( impl.deleteAllShorts(userId, password, token));
+	public void deleteAllShorts(String userId, String password) {
+		super.resultOrThrow( impl.deleteAllShorts(userId, password));
 	}	
 }

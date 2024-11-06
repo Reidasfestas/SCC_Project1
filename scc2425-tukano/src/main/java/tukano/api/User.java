@@ -1,16 +1,28 @@
 package tukano.api;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import utils.CosmosContainerName;
 
 @Entity
+@CosmosContainerName("users")
 public class User {
 	@Id
 	@JsonProperty("id")
+	@Column(name = "id")
+	@JsonAlias("userId")
 	private String userId;
+
+	@Column(name = "pwd")
 	private String pwd;
+
+	@Column(name = "email")
 	private String email;
+
+	@Column(name = "displayName")
 	private String displayName;
 
 	public User() {}

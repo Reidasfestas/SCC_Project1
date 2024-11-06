@@ -25,7 +25,9 @@ public class TukanoMainApplication extends Application
 		resources.add(RestUsersResource.class);
 		resources.add(RestShortsResource.class);
 
-		//Token.setSecret("blabla");
+		Token.setSecret("token");
+
+		serverURI = "https://scc-tukano-60019-backend.azurewebsites.net";
 
 		Log.info(String.format("Tukano Server ready @ %s\n",  serverURI));
 	}

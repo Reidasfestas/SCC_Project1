@@ -4,25 +4,27 @@ import com.azure.cosmos.*;
 import com.azure.cosmos.models.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
 
-import com.azure.cosmos.util.CosmosPagedIterable;
+import AzureSetUp.AzureProperties;
 import tukano.api.Result;
-import tukano.impl.JavaUsers;
+import tukano.api.Short;
+import tukano.api.User;
 import org.hibernate.Session;
+import tukano.impl.data.Following;
+import tukano.impl.data.Likes;
 
 public class CosmosDatabase implements Database {
 
     private static Logger Log = Logger.getLogger(CosmosDatabase.class.getName());
 
-    private static final String CONNECTION_URL = "https://cosmos60019.documents.azure.com:443/"; // replace with your own
-    private static final String DB_KEY = "fzVoSc1RBVllqQvxkTMPNGNsFiMT1xDzWlRjPN8deO7qPwhQmtZgftlZ0fQ0F9aUqsmJNCCobmS2ACDbLzI2Cg==";
-    private static final String DB_NAME = "cosmosdb60019";
-    private String CONTAINER = "users";
+    private Map<Class<?>, CosmosContainer> containerMap = new HashMap<>();
 
     private static CosmosDatabase instance;
 
@@ -35,8 +37,8 @@ public class CosmosDatabase implements Database {
             return instance;
 
         CosmosClient client = new CosmosClientBuilder()
-                .endpoint(CONNECTION_URL)
-                .key(DB_KEY)
+                .endpoint(AzureProperties.getCosmosDBUrl())
+                .key(AzureProperties.getCosmosDBKey())
                 //.directMode()
                 .gatewayMode()
                 // replace by .directMode() for better performance
@@ -49,28 +51,23 @@ public class CosmosDatabase implements Database {
 
     }
 
-//    public CosmosDatabase(String endpoint, String key, String databaseName, String containerName) {
-//        this.client = new CosmosClientBuilder()
-//                .endpoint(endpoint)
-//                .key(key)
-//                .consistencyLevel(ConsistencyLevel.EVENTUAL)
-//                .buildClient();
-//        this.container = client.getDatabase(databaseName).getContainer(containerName);
-//    }
-
     public CosmosDatabase(CosmosClient client) {
         this.client = client;
+        init();
     }
 
     public void changeContainer(String containerName) {
-        CONTAINER = containerName;
+        //CONTAINER = containerName;
     }
 
     private synchronized void init() {
         if( db != null)
             return;
-        db = client.getDatabase(DB_NAME);
-        container = db.getContainer(CONTAINER);
+        db = client.getDatabase(AzureProperties.getCosmosDBDatabase());
+        containerMap.put(User.class, db.getContainer("users"));
+        containerMap.put(Short.class, db.getContainer("shorts"));
+        containerMap.put(Likes.class, db.getContainer("likes"));
+        containerMap.put(Following.class, db.getContainer("followings"));
     }
 
     public void close() {
@@ -100,6 +97,10 @@ public class CosmosDatabase implements Database {
     @Override
     public <T> List<T> sql(String query, Class<T> clazz) {
         return tryCatchList(() -> {
+            container = containerMap.get(clazz);
+            if (container == null) {
+                Log.info("No container found for class: " + clazz);
+            }
             var res = container.queryItems(query, new CosmosQueryRequestOptions(), clazz);
             return res.stream().toList();
         });
@@ -107,20 +108,43 @@ public class CosmosDatabase implements Database {
 
     @Override
     public <T> List<T> sql(Class<T> clazz, String fmt, Object... args) {
+        container = containerMap.get(clazz);
+        if (container == null) {
+            Log.info("No container found for class: " + clazz);
+        }
         var res = container.queryItems(String.format(fmt, args), new CosmosQueryRequestOptions(),clazz);
         return res.stream().toList();
     }
 
     @Override
     public <T> Result<T> getOne(String id, Class<T> clazz) {
+        container = containerMap.get(clazz);
+        if (container == null) {
+            Log.info("No container found for class: " + clazz);
+        }
         return tryCatch( () -> container.readItem(id, new PartitionKey(id), clazz).getItem());
     }
 
     @Override
     public <T> Result<T> deleteOne(T obj) {
         return tryCatch(() -> {
-            // Perform the delete operation on the Cosmos DB container
-            container.deleteItem(obj, new CosmosItemRequestOptions());
+            CosmosContainerName annotation = obj.getClass().getAnnotation(CosmosContainerName.class);
+            // Check if the annotation exists
+            if (annotation == null) {
+                Log.info("No CosmosContainerName annotation found for class: " + obj.getClass());
+            }
+
+            // Get the container name from the annotation value
+            String containerName = annotation.value();
+
+            // Retrieve the Cosmos container by name
+            container = db.getContainer(containerName);
+
+            synchronized (obj) {
+                // Perform the delete operation on the Cosmos DB container
+                container.deleteItem(obj, new CosmosItemRequestOptions());
+            }
+
             // Return the deleted object as part of the Result
             return obj;
         });
@@ -128,13 +152,42 @@ public class CosmosDatabase implements Database {
 
     @Override
     public <T> Result<T> updateOne(T obj) {
-        return tryCatch( () -> container.upsertItem(obj).getItem());
+        CosmosContainerName annotation = obj.getClass().getAnnotation(CosmosContainerName.class);
+        // Check if the annotation exists
+        if (annotation == null) {
+            Log.info("No CosmosContainerName annotation found for class: " + obj.getClass());
+        }
+
+        // Get the container name from the annotation value
+        String containerName = annotation.value();
+
+        // Retrieve the Cosmos container by name
+        container = db.getContainer(containerName);
+
+        synchronized (obj) {
+            return tryCatch( () -> container.upsertItem(obj).getItem());
+        }
     }
 
     @Override
     public <T> Result<T> insertOne(T obj) {
-        //Log.info(("Trying to create item: " + obj));
-        return tryCatch( () -> container.createItem(obj).getItem());
+        Log.info(("Trying to create item: " + obj));
+        CosmosContainerName annotation = obj.getClass().getAnnotation(CosmosContainerName.class);
+        // Check if the annotation exists
+        if (annotation == null) {
+            Log.info("No CosmosContainerName annotation found for class: " + obj.getClass());
+        }
+
+        // Get the container name from the annotation value
+        String containerName = annotation.value();
+
+        // Retrieve the Cosmos container by name
+        container = db.getContainer(containerName);
+
+        synchronized (obj) {
+            // Insert the item into the determined container
+            return tryCatch(() -> container.createItem(obj).getItem());
+        }
     }
 
     @Override

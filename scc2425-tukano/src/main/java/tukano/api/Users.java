@@ -58,5 +58,5 @@ public interface Users {
 	 * @return OK when the search was successful, regardless of the number of hits (including 0 hits). 
 	 *         BAD_REQUEST - otherwise.
 	 */
-	Result<List<User>> searchUsers(String pattern);	
+	Result<List<User>> searchUsers(String pattern);
 }

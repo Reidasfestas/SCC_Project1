@@ -21,16 +21,16 @@ import tukano.api.Result.ErrorCode;
  * @param <Session>
  */
 public class Hibernate {
+	private static final String HIBERNATE_CFG_FILE = "hibernate.cfg.xml";
 //	private static Logger Log = Logger.getLogger(Hibernate.class.getName());
 
-	private static final String HIBERNATE_CFG_FILE = "main/webapp/WEB-INF/classes/hibernate.cfg.xml";
 	private SessionFactory sessionFactory;
 	private static Hibernate instance;
 
 	private Hibernate() {
 		try {
-			sessionFactory = new Configuration().configure().buildSessionFactory();    //(new File(HIBERNATE_CFG_FILE)).buildSessionFactory();
-
+			sessionFactory = new Configuration().configure().buildSessionFactory();
+			//sessionFactory = new Configuration().configure(new File(HIBERNATE_CFG_FILE)).buildSessionFactory();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -63,14 +63,14 @@ public class Hibernate {
 			return Result.ok( res );
 		});
 	}
-	
+
 	public <T> Result<T> deleteOne(T obj) {
 		return execute( hibernate -> {
 			hibernate.remove( obj );
 			return Result.ok( obj );
 		});
 	}
-		
+
 	public <T> Result<T> getOne(Object id, Class<T> clazz) {
 		try (var session = sessionFactory.openSession()) {
 			var res = session.find(clazz, id);
@@ -82,7 +82,7 @@ public class Hibernate {
 			throw e;
 		}
 	}
-	
+
 	public <T> List<T> sql(String sqlStatement, Class<T> clazz) {
 		try (var session = sessionFactory.openSession()) {
 			var query = session.createNativeQuery(sqlStatement, clazz);
@@ -91,14 +91,14 @@ public class Hibernate {
 			throw e;
 		}
 	}
-	
+
 	public <T> Result<T> execute(Consumer<Session> proc) {
 		return execute( (hibernate) -> {
 			proc.accept( hibernate);
 			return Result.ok();
 		});
 	}
-	
+
 	public <T> Result<T> execute(Function<Session, Result<T>> func) {
 		Transaction tx = null;
 		try (var session = sessionFactory.openSession()) {

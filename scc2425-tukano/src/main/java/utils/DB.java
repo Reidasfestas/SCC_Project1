@@ -16,15 +16,11 @@ public class DB {
 	}
 
 	public static void configureHibernateDB() {
-		database = new HibernateDatabase();
+		database = HibernateDatabase.getInstance();
 	}
 
 	public static void configureCosmosDB() {
 		database = CosmosDatabase.getInstance();
-	}
-
-	public static void changeContainerName(String containerName) {
-		database.changeContainer(containerName);
 	}
 
 	public static <T> List<T> sql(String query, Class<T> clazz) {

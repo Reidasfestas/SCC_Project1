@@ -1,14 +1,16 @@
 package tukano.impl;
 
 import static java.lang.String.format;
-import static tukano.api.Result.error;
+import static tukano.api.Result.*;
 import static tukano.api.Result.ErrorCode.FORBIDDEN;
 
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
+import AzureSetUp.AzureProperties;
 import tukano.api.Blobs;
 import tukano.api.Result;
+import tukano.api.User;
 import tukano.impl.rest.TukanoRestServer;
 import tukano.impl.storage.AzureBlobStorage;
 import tukano.impl.storage.BlobStorage;
@@ -20,10 +22,10 @@ public class JavaBlobs implements Blobs {
 
 	private static Blobs instance;
 	private static final Logger Log = Logger.getLogger(JavaBlobs.class.getName());
-	private static final boolean AZURE_STORAGE = true;
+	//private static final boolean AZURE_STORAGE = false;
 
 	public String baseURI;
-	private BlobStorage storage;
+	private final BlobStorage storage;
 
 	synchronized public static Blobs getInstance() {
 		if( instance == null )
@@ -32,7 +34,7 @@ public class JavaBlobs implements Blobs {
 	}
 
 	private JavaBlobs() {
-		if(AZURE_STORAGE) {
+		if(AzureProperties.getInstance().isBlobStorageEnabled()) {
 			storage = new AzureBlobStorage();
 			baseURI = String.format("%s/%s/", TukanoMainApplication.serverURI, Blobs.NAME);
 		}
@@ -40,8 +42,6 @@ public class JavaBlobs implements Blobs {
 			storage = new FilesystemStorage();
 			baseURI = String.format("%s/%s/", TukanoRestServer.serverURI, Blobs.NAME);
 		}
-
-
 	}
 
 	@Override
@@ -85,13 +85,11 @@ public class JavaBlobs implements Blobs {
 	}
 
 	@Override
-	public Result<Void> deleteAllBlobs(String userId, String token) {
-		Log.info(() -> format("deleteAllBlobs : userId = %s, token=%s\n", userId, token));
-
-		if( ! Token.isValid( token, userId ) )
-			return error(FORBIDDEN);
-
-		return storage.delete( toPath(userId));
+	public Result<Void> deleteAllBlobs(String userId, String pwd) {
+		Log.info(() -> format("deleteAllBlobs : userId = %s\n", userId));
+		return errorOrResult( okUser(userId, pwd), user -> {
+			return storage.deleteAll( userId );
+		});
 	}
 
 	private boolean validBlobId(String blobId, String token) {
@@ -105,5 +103,9 @@ public class JavaBlobs implements Blobs {
 
 	private String toURL( String blobId ) {
 		return baseURI + blobId ;
+	}
+
+	protected Result<User> okUser(String userId, String pwd) {
+		return JavaUsers.getInstance().getUser(userId, pwd);
 	}
 }

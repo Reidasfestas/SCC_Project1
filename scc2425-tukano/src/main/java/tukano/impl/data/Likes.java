@@ -1,17 +1,27 @@
 package tukano.impl.data;
 
 import java.util.Objects;
+import java.util.UUID;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.*;
+import utils.CosmosContainerName;
 
 @Entity
+@CosmosContainerName("likes")
 public class Likes {
+
+	@Id
+	@JsonProperty("id")
+	@Column(name = "id")
+	String id;
 	
-	@Id 
+	@Id
+	@Column(name = "userId")
 	String userId;
 	
-	@Id 
+	@Id
+	@Column(name = "shortId")
 	String shortId;
 	
 	public String getOwnerId() {
@@ -22,6 +32,7 @@ public class Likes {
 		this.ownerId = ownerId;
 	}
 
+	@Column(name = "ownerId")
 	String ownerId;
 	
 	public Likes() {}
@@ -30,6 +41,7 @@ public class Likes {
 		this.userId = userId;
 		this.shortId = shortId;
 		this.ownerId = ownerId;
+		this.id = userId + "-" + shortId;
 	}
 
 	public String getUserId() {
