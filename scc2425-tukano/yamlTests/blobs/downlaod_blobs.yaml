@@ -1,0 +1,38 @@
+config:
+    target: https://scc-tukano-60019-backend.azurewebsites.net/rest
+    phases:
+        - name: download_blob
+          duration: 30 # adjust to allow sequential posting for each user
+          arrivalRate: 1 # post one user at a time to avoid duplicates
+    payload:
+        path: ./data/users.csv
+        order: sequence # selects users sequentially, default is random
+        skipHeader: true # Skip header row
+        delimiter: "," # standard delimiter
+        skipEmptyLines: true # not important in our case
+        fields:
+            - "id"
+            - "pwd"
+            - "email"
+            - "displayName"
+scenarios:
+    - name: TukanoDownload
+      flow:
+          - post:
+                url: "/shorts/{{ id }}?pwd={{ pwd }}"
+                headers:
+                    Content-Type: application/json
+                capture:
+                  - json: "$.id"
+                    as: "shortId"
+                  - json: "$.blobUrl"
+                    as: "blobUrl"
+          - post:
+              url: "/blobs/{{ id }}?token={{ blobUrl }}"
+              headers:
+                Content-Type: application/octet-stream
+                body: \x00\x01\x02\x03\x04
+          - get:
+              url: "/blobs/{{ id }}?token={{ blobUrl }}"
+              headers:
+                Content-Type: application/octet-stream

@@ -24,8 +24,8 @@ public class AzureProperties
 	private static final boolean BLOB_SECONDARY_REGION = false;
 
 
-	private static String BLOB_CONNECTION = "DefaultEndpointsProtocol=https;AccountName=sto60019northeurope;AccountKey=Mhg9RjX9gEJjdv+PTyp25kOb4pcGaxfy9HbSlQSiZMAr35lFv/A7EzDjII5q9KF4cPIkksc/y9ll+ASt4MYNhw==;EndpointSuffix=core.windows.net";
-	private static String COSMOS_KEY = "XhgB52VcbKdVCrxzYYweRZztYcgVqjpbF1k7ToVB4TN5lg18LoExJXbyyycDXW9Xv1MGp0d1dr9mACDb74vQcw==";
+	private static String BLOB_CONNECTION = "DefaultEndpointsProtocol=https;AccountName=sto60019northeurope;AccountKey=ikPyljeWHoboS/F1tYE/PeiWaqAmdfIHIlRb0NvQ/CHLAcTeUuMAZfHcJA+6fdNb4uMIydgXuTyz+AStc2dEsQ==;EndpointSuffix=core.windows.net";
+	private static String COSMOS_KEY = "b44mpQ6kfr6co5QIVWvLebIkc2LjJDGKlEmLnqSMKq8SMC1LCn3l01aKOV67p8T9O3eaylRFU0JwACDbSAakYg==";
 	private static String COSMOS_URL = "https://cosmos60019.documents.azure.com:443/";
 	private static String COSMOS_DATABASE = "cosmosdb60019";
 

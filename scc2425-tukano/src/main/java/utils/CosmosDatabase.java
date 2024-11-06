@@ -24,11 +24,6 @@ public class CosmosDatabase implements Database {
 
     private static Logger Log = Logger.getLogger(CosmosDatabase.class.getName());
 
-    private static final String CONNECTION_URL = "https://cosmos60019.documents.azure.com:443/"; // replace with your own
-    private static final String DB_KEY = "93uOJS9hdqnvdRHVJA4yyXEBY3SUv2LUSRBCyldRcQeQRrME1ECv0BQ7EWtkhv4RAgH1Tx8LpD7cACDboOyh4w==";
-    private static final String DB_NAME = "cosmosdb60019";
-    private String CONTAINER;
-
     private Map<Class<?>, CosmosContainer> containerMap = new HashMap<>();
 
     private static CosmosDatabase instance;
@@ -62,7 +57,7 @@ public class CosmosDatabase implements Database {
     }
 
     public void changeContainer(String containerName) {
-        CONTAINER = containerName;
+        //CONTAINER = containerName;
     }
 
     private synchronized void init() {
@@ -145,8 +140,11 @@ public class CosmosDatabase implements Database {
             // Retrieve the Cosmos container by name
             container = db.getContainer(containerName);
 
-            // Perform the delete operation on the Cosmos DB container
-            container.deleteItem(obj, new CosmosItemRequestOptions());
+            synchronized (obj) {
+                // Perform the delete operation on the Cosmos DB container
+                container.deleteItem(obj, new CosmosItemRequestOptions());
+            }
+
             // Return the deleted object as part of the Result
             return obj;
         });
@@ -165,7 +163,10 @@ public class CosmosDatabase implements Database {
 
         // Retrieve the Cosmos container by name
         container = db.getContainer(containerName);
-        return tryCatch( () -> container.upsertItem(obj).getItem());
+
+        synchronized (obj) {
+            return tryCatch( () -> container.upsertItem(obj).getItem());
+        }
     }
 
     @Override
@@ -183,8 +184,10 @@ public class CosmosDatabase implements Database {
         // Retrieve the Cosmos container by name
         container = db.getContainer(containerName);
 
-        // Insert the item into the determined container
-        return tryCatch(() -> container.createItem(obj).getItem());
+        synchronized (obj) {
+            // Insert the item into the determined container
+            return tryCatch(() -> container.createItem(obj).getItem());
+        }
     }
 
     @Override

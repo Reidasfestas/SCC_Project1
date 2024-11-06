@@ -1,0 +1,33 @@
+config:
+  target: https://scc-tukano-60019-backend.azurewebsites.net/rest
+  phases:
+    - name: like
+      duration: 30 # adjust to allow sequential posting for each user
+      arrivalRate: 1 # post one user at a time to avoid duplicates
+  payload:
+    path: ./data/follows.csv
+    order: sequence # selects users sequentially, default is random
+    skipHeader: true # Skip header row
+    delimiter: "," # standard delimiter
+    skipEmptyLines: true # not important in our case
+    fields:
+      - "id1"
+      - "id2"
+      - "pwd"
+scenarios:
+  - name: TukanoLike
+    flow:
+      - post:
+          url: "/shorts/{{ id1 }}?pwd={{ pwd }}"
+          headers:
+            Content-Type: application/json
+          capture:
+            - json: "$.id"
+              as: "shortId"
+      - post:
+          url: "/shorts/{{ shortId }}/{{ id1 }}/likes?pwd={{ pwd }}"
+          headers:
+            Content-Type: application/json
+          json:
+            true
+
