@@ -23,7 +23,7 @@ public class Short {
 
 	@Id
 	@JsonProperty("id")
-	@Column(name = "shortId")
+	@Column(name = "id")
 	@JsonAlias("shortId")
 	String shortId;
 

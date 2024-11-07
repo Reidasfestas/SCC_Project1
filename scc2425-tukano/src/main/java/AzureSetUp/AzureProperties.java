@@ -17,11 +17,11 @@ public class AzureProperties
 //	private static final String COSMOSDB_KEY = "COSMOSDB_KEY";
 //	private static final String COSMOSDB_URL = "COSMOSDB_URL";
 //	private static final String COSMOSDB_DATABASE = "COSMOSDB_DATABASE";
-	private static final boolean BLOB_STORAGE_ENABLED = true;
-	private static final boolean USERS_COSMOSDB_ENABLED = true;
-	private static final boolean SHORTS_STORAGE_ENABLED = true;
-	private static final boolean CACHE_ENABLED = true;
-	private static final boolean BLOB_SECONDARY_REGION = true;
+	private static final boolean BLOB_STORAGE_ENABLED = false;
+	private static final boolean USERS_COSMOSDB_ENABLED = false;
+	private static final boolean SHORTS_STORAGE_ENABLED = false;
+	private static final boolean CACHE_ENABLED = false;
+	private static final boolean BLOB_SECONDARY_REGION = false;
 
 
 	private static String BLOB_CONNECTION = "DefaultEndpointsProtocol=https;AccountName=sto60019northeurope;AccountKey=ikPyljeWHoboS/F1tYE/PeiWaqAmdfIHIlRb0NvQ/CHLAcTeUuMAZfHcJA+6fdNb4uMIydgXuTyz+AStc2dEsQ==;EndpointSuffix=core.windows.net";

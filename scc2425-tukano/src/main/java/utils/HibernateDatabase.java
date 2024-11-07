@@ -10,12 +10,12 @@ import org.hibernate.Session;
 public class HibernateDatabase implements Database {
 
     private static HibernateDatabase instance;
-    //private static Hibernate hibernateDB;
+    private static Hibernate hibernateDB;
 
     synchronized public static HibernateDatabase getInstance() {
         if (instance == null) {
             instance = new HibernateDatabase();
-            //hibernateDB = Hibernate.getInstance();
+            hibernateDB = Hibernate.getInstance();
         }
         return instance;
     }
@@ -47,12 +47,12 @@ public class HibernateDatabase implements Database {
 
     @Override
     public <T> List<T> sql(String query, Class<T> clazz) {
-        return Hibernate.getInstance().sql(query, clazz);
+        return hibernateDB.sql(query, clazz);
     }
 
     @Override
     public <T> List<T> sql(Class<T> clazz, String fmt, Object... args) {
-        return Hibernate.getInstance().sql(String.format(fmt, args), clazz);
+        return hibernateDB.sql(String.format(fmt, args), clazz);
     }
 
     @Override
@@ -62,26 +62,26 @@ public class HibernateDatabase implements Database {
 
     @Override
     public <T> Result<T> deleteOne(T obj) {
-        return Hibernate.getInstance().deleteOne(obj);
+        return hibernateDB.deleteOne(obj);
     }
 
     @Override
     public <T> Result<T> updateOne(T obj) {
-        return Hibernate.getInstance().updateOne(obj);
+        return hibernateDB.updateOne(obj);
     }
 
     @Override
     public <T> Result<T> insertOne(T obj) {
-        return Result.errorOrValue(Hibernate.getInstance().persistOne(obj), obj);
+        return Result.errorOrValue(hibernateDB.persistOne(obj), obj);
     }
 
     @Override
     public <T> Result<T> transaction(Consumer<Session> c) {
-        return Hibernate.getInstance().execute(c::accept);
+        return hibernateDB.execute(c::accept);
     }
 
     @Override
     public <T> Result<T> transaction(Function<Session, Result<T>> func) {
-        return Hibernate.getInstance().execute(func);
+        return hibernateDB.execute(func);
     }
 }

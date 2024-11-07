@@ -27,7 +27,7 @@ public class Hibernate {
 	private SessionFactory sessionFactory;
 	private static Hibernate instance;
 
-	private Hibernate() {
+	Hibernate() {
 		try {
 			sessionFactory = new Configuration().configure().buildSessionFactory();
 			//sessionFactory = new Configuration().configure(new File(HIBERNATE_CFG_FILE)).buildSessionFactory();
@@ -49,14 +49,16 @@ public class Hibernate {
 	}
 
 	public Result<Void> persistOne(Object  obj) {
-		return execute( (hibernate) -> {
-			hibernate.persist( obj );
+		init();
+		return execute( (instance) -> {
+			instance.persist( obj );
 		});
 	}
 
 	public <T> Result<T> updateOne(T obj) {
-		return execute( hibernate -> {
-			var res = hibernate.merge( obj );
+		init();
+		return execute( instance -> {
+			var res = instance.merge( obj );
 			if( res == null)
 				return Result.error( ErrorCode.NOT_FOUND );
 			
@@ -65,13 +67,15 @@ public class Hibernate {
 	}
 
 	public <T> Result<T> deleteOne(T obj) {
-		return execute( hibernate -> {
-			hibernate.remove( obj );
+		init();
+		return execute( instance -> {
+			instance.remove( obj );
 			return Result.ok( obj );
 		});
 	}
 
 	public <T> Result<T> getOne(Object id, Class<T> clazz) {
+		init();
 		try (var session = sessionFactory.openSession()) {
 			var res = session.find(clazz, id);
 			if (res == null)
@@ -84,6 +88,7 @@ public class Hibernate {
 	}
 
 	public <T> List<T> sql(String sqlStatement, Class<T> clazz) {
+		init();
 		try (var session = sessionFactory.openSession()) {
 			var query = session.createNativeQuery(sqlStatement, clazz);
 			return query.list();
@@ -93,13 +98,15 @@ public class Hibernate {
 	}
 
 	public <T> Result<T> execute(Consumer<Session> proc) {
-		return execute( (hibernate) -> {
-			proc.accept( hibernate);
+		init();
+		return execute( (instance) -> {
+			proc.accept( instance);
 			return Result.ok();
 		});
 	}
 
 	public <T> Result<T> execute(Function<Session, Result<T>> func) {
+		init();
 		Transaction tx = null;
 		try (var session = sessionFactory.openSession()) {
 			tx = session.beginTransaction();
@@ -118,5 +125,10 @@ public class Hibernate {
 			e.printStackTrace();
 			throw e;
 		}
+	}
+
+	private void init() {
+		instance = getInstance();
+		if(sessionFactory == null) sessionFactory = new Configuration().configure().buildSessionFactory();
 	}
 }

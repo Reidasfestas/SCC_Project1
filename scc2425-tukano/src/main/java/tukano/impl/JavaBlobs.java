@@ -40,7 +40,7 @@ public class JavaBlobs implements Blobs {
 		}
 		else {
 			storage = new FilesystemStorage();
-			baseURI = String.format("%s/%s/", TukanoRestServer.serverURI, Blobs.NAME);
+			baseURI = String.format("%s/%s/", TukanoMainApplication.serverURI, Blobs.NAME);
 		}
 	}
 
