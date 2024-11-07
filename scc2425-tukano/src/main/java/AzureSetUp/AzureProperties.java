@@ -13,21 +13,28 @@ public class AzureProperties
 {
 	private static Logger Log = Logger.getLogger(AzureProperties.class.getName());
 	private static AzureProperties instance = null;
-//	private static final String BLOB_KEY = "BlobStoreConnection";
-//	private static final String COSMOSDB_KEY = "COSMOSDB_KEY";
-//	private static final String COSMOSDB_URL = "COSMOSDB_URL";
-//	private static final String COSMOSDB_DATABASE = "COSMOSDB_DATABASE";
-	private static final boolean BLOB_STORAGE_ENABLED = false;
-	private static final boolean USERS_COSMOSDB_ENABLED = false;
-	private static final boolean SHORTS_STORAGE_ENABLED = false;
-	private static final boolean CACHE_ENABLED = false;
-	private static final boolean BLOB_SECONDARY_REGION = false;
+	private static final boolean BLOB_STORAGE_ENABLED = true;
+	private static final boolean USERS_COSMOSDB_ENABLED = true;
+	private static final boolean SHORTS_STORAGE_ENABLED = true;
+	private static final boolean CACHE_ENABLED = true;
+	private static final boolean BLOB_SECONDARY_REGION = true;
+	private static final boolean EUROPE_REGION = true;
 
+	private static String BLOB_CONNECTION_EUROPE = "DefaultEndpointsProtocol=https;AccountName=sto60019northeurope;AccountKey=A6A5VpnMLIpsgKmk0r4x7CdmFyJFh6UpBucBr1/AF5ZDQb2ympyrKw2Ycodf+Apz13mu7aN+HveF+AStWXf5/Q==;EndpointSuffix=core.windows.net";
+	private static String BLOB_CONNECTION_US = "DefaultEndpointsProtocol=https;AccountName=sto60019northcentralus;AccountKey=p7krD91OtnLCZ5303VXZtW/kw8hwA6o7GYxAzd0zp2JU9+ead0pjYeSLfgQ+vTMiEb6O1m08eud3+AStQf4jgg==;EndpointSuffix=core.windows.net";
 
-	private static String BLOB_CONNECTION = "DefaultEndpointsProtocol=https;AccountName=sto60019northeurope;AccountKey=ikPyljeWHoboS/F1tYE/PeiWaqAmdfIHIlRb0NvQ/CHLAcTeUuMAZfHcJA+6fdNb4uMIydgXuTyz+AStc2dEsQ==;EndpointSuffix=core.windows.net";
-	private static String COSMOS_KEY = "b44mpQ6kfr6co5QIVWvLebIkc2LjJDGKlEmLnqSMKq8SMC1LCn3l01aKOV67p8T9O3eaylRFU0JwACDbSAakYg==";
+	private static String COSMOS_KEY = "UxOzFdRhP967DVajvb1skwRUeCHjsPqPcVBa5tzkfNmTyfhtNp1U5Uw782duFnthExgZvAEtWy95ACDbW6zNtQ==";
 	private static String COSMOS_URL = "https://cosmos60019.documents.azure.com:443/";
 	private static String COSMOS_DATABASE = "cosmosdb60019";
+
+	private static String REDIS_KEY_EUROPE = "Rij5s5vXGLCuXX6V4pdArQdXBw9Pz6OQGAzCaFCVg8w=";
+	private static String REDIS_URL_EUROPE = "redis60019northeurope.redis.cache.windows.net";
+
+	private static String REDIS_KEY_US = "jGNb12KuXiPthhmHfZyQY1BfYHv1EsR9hAzCaCKSPoc=";
+	private static String REDIS_URL_US = "redis60019northcentralus.redis.cache.windows.net";
+
+
+
 
 	public static final String PROPS_FILE = "azurekeys-northeurope.props";
 	private static Properties props;
@@ -64,7 +71,31 @@ public class AzureProperties
 
 	public static String getBlobKey() {
 		//return props.getProperty(BLOB_KEY);
-		return BLOB_CONNECTION;
+		if(EUROPE_REGION) {
+			return BLOB_CONNECTION_EUROPE;
+		}
+		return BLOB_CONNECTION_US;
+	}
+
+	public static String getSecondaryBlobKey() {
+		if(EUROPE_REGION) {
+			return BLOB_CONNECTION_US;
+		}
+		return BLOB_CONNECTION_EUROPE;
+	}
+
+	public static String getCacheKey() {
+		if(EUROPE_REGION) {
+			return BLOB_CONNECTION_EUROPE;
+		}
+		return BLOB_CONNECTION_US;
+	}
+
+	public static String getCacheUrl() {
+		if(EUROPE_REGION) {
+			return REDIS_URL_EUROPE;
+		}
+		return REDIS_URL_US;
 	}
 
 	public static String getCosmosDBKey() {

@@ -1,0 +1,7 @@
+# Date : 11/7/24, 4:23 PM
+REDIS_KEY=jGNb12KuXiPthhmHfZyQY1BfYHv1EsR9hAzCaCKSPoc=
+REDIS_URL=redis60019northcentralus.redis.cache.windows.net
+BlobStoreConnection=DefaultEndpointsProtocol=https;AccountName=sto60019northcentralus;AccountKey=p7krD91OtnLCZ5303VXZtW/kw8hwA6o7GYxAzd0zp2JU9+ead0pjYeSLfgQ+vTMiEb6O1m08eud3+AStQf4jgg==;EndpointSuffix=core.windows.net
+COSMOSDB_KEY=UxOzFdRhP967DVajvb1skwRUeCHjsPqPcVBa5tzkfNmTyfhtNp1U5Uw782duFnthExgZvAEtWy95ACDbW6zNtQ==
+COSMOSDB_URL=https://cosmos60019.documents.azure.com:443/
+COSMOSDB_DATABASE=cosmosdb60019

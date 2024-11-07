@@ -32,7 +32,7 @@ import java.util.*;
 
 public class AzureManagement {
 	// TODO: These variable allow you to control what is being created
-	static final boolean CREATE_REDIS = false;
+	static final boolean CREATE_REDIS = true;
 	static final boolean CREATE_STORAGE = true;
 	static final boolean CREATE_COSMOSDB = true;
 	static final boolean CREATE_FUNCTIONS = true;
@@ -44,7 +44,7 @@ public class AzureManagement {
 	static final String AZURE_COSMOSDB_DATABASE = "cosmosdb" + MY_ID;	// Cosmos DB database name
 	static final String[] BLOB_CONTAINERS = { "shorts" };	// TODO: Containers to add to the blob storage
 
-	static final Region[] REGIONS = new Region[] { Region.EUROPE_NORTH}; // Define the regions to deploy resources here
+	static final Region[] REGIONS = new Region[] { Region.EUROPE_NORTH, Region.US_NORTH_CENTRAL}; // Define the regions to deploy resources here
 	
 	// Name of resource group for each region
 	static final String[] AZURE_RG_REGIONS = Arrays.stream(REGIONS)

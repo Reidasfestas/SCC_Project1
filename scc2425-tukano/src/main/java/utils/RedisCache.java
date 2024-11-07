@@ -1,11 +1,12 @@
 package utils;
 
+import AzureSetUp.AzureProperties;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 
 public class RedisCache {
-	private static final String RedisHostname = "scc2425cache60247.redis.cache.windows.net";
-	private static final String RedisKey = "mdujNtqMGUSBB9PVPMZCbBRugzJhrbrprAzCaH0nOmc=";
+	//private static final String RedisHostname = "scc2425cache60247.redis.cache.windows.net";
+	//private static final String RedisKey = "mdujNtqMGUSBB9PVPMZCbBRugzJhrbrprAzCaH0nOmc=";
 	private static final int REDIS_PORT = 6380;
 	private static final int REDIS_TIMEOUT = 1000;
 	private static final boolean Redis_USE_TLS = true;
@@ -25,7 +26,7 @@ public class RedisCache {
 		poolConfig.setTestWhileIdle(true);
 		poolConfig.setNumTestsPerEvictionRun(3);
 		poolConfig.setBlockWhenExhausted(true);
-		instance = new JedisPool(poolConfig, RedisHostname, REDIS_PORT, REDIS_TIMEOUT, RedisKey, Redis_USE_TLS);
+		instance = new JedisPool(poolConfig, AzureProperties.getCacheUrl(), REDIS_PORT, REDIS_TIMEOUT, AzureProperties.getCacheKey(), Redis_USE_TLS);
 		return instance;
 	}
 
