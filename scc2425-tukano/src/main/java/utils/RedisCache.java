@@ -8,7 +8,7 @@ public class RedisCache {
 	//private static final String RedisHostname = "scc2425cache60247.redis.cache.windows.net";
 	//private static final String RedisKey = "mdujNtqMGUSBB9PVPMZCbBRugzJhrbrprAzCaH0nOmc=";
 	private static final int REDIS_PORT = 6380;
-	private static final int REDIS_TIMEOUT = 1000;
+	private static final int REDIS_TIMEOUT = 3000;
 	private static final boolean Redis_USE_TLS = true;
 	
 	private static JedisPool instance;

@@ -19,6 +19,7 @@ import java.util.logging.Logger;
 import com.fasterxml.jackson.core.type.TypeReference;
 import AzureSetUp.AzureProperties;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.exceptions.JedisConnectionException;
 import tukano.api.Blobs;
 import tukano.api.Result;
 
@@ -77,51 +78,65 @@ public class JavaShorts implements Shorts {
 	}
 
 	private void cacheShrt(String shortId, String value) {
-		jedis.set("shrt:" + shortId, value);
+		try {
+			jedis.set("shrt:" + shortId, value);
+			jedis.lpush(MOST_RECENT_SHRTS_LIST, value);
 
-		jedis.lpush(MOST_RECENT_SHRTS_LIST, value );
-
-		var toTrim = jedis.lrange(MOST_RECENT_SHRTS_LIST, MAX_CACHED_SHRTS, -1);
-		if (!toTrim.isEmpty()) {
-			jedis.ltrim(MOST_RECENT_SHRTS_LIST, 0, MAX_CACHED_SHRTS - 1);
-
-			jedis.del("shrt:" + JSON.decode(toTrim.get(0), User.class).getUserId());
+			var toTrim = jedis.lrange(MOST_RECENT_SHRTS_LIST, MAX_CACHED_SHRTS, -1);
+			if (!toTrim.isEmpty()) {
+				jedis.ltrim(MOST_RECENT_SHRTS_LIST, 0, MAX_CACHED_SHRTS - 1);
+				jedis.del("shrt:" + JSON.decode(toTrim.get(0), User.class).getUserId());
+			}
+		} catch (JedisConnectionException e) {
+			Log.warning("Redis cache operation failed in cacheShrt: " + e.getMessage());
 		}
 	}
 
 	private int getLikeCount(String shortId) {
-		String count = jedis.get(LIKES_PREFIX + shortId);
-		return count != null ? Integer.parseInt(count) : 0;
+		try {
+			String count = jedis.get(LIKES_PREFIX + shortId);
+			return count != null ? Integer.parseInt(count) : 0;
+		} catch (JedisConnectionException e) {
+			Log.warning("Redis cache operation failed in getLikeCount: " + e.getMessage());
+			return 0;
+		}
 	}
 
 	private void deleteCachedShrt(String shortId, String value) {
-		jedis.del("shrt:" + shortId);
-
-		jedis.lrem(MOST_RECENT_SHRTS_LIST, 0, value);
+		try {
+			jedis.del("shrt:" + shortId);
+			jedis.lrem(MOST_RECENT_SHRTS_LIST, 0, value);
+		} catch (JedisConnectionException e) {
+			Log.warning("Redis cache operation failed in deleteCachedShrt: " + e.getMessage());
+		}
 	}
 
 
 	@Override
 	public Result<Short> createShort(String userId, String password) {
-		Log.info(() -> format("createShort : userId = %s, pwd = %s\n", userId, password));
+		Log.info(() -> format("createShort : userId = %s, pwd = [PROTECTED]\n", userId));
 
-		return errorOrResult( okUser(userId, password), user -> {
-
+		return errorOrResult(okUser(userId, password), user -> {
 			var shortId = format("%s+%s", userId, UUID.randomUUID());
-			String blobUrl;
-			if(AzureProperties.getInstance().isShortsStorageEnabled()) blobUrl = format("%s/%s/%s", TukanoMainApplication.serverURI, Blobs.NAME, shortId);
-			else blobUrl = format("%s/%s/%s", TukanoMainApplication.serverURI, Blobs.NAME, shortId);
+			var blobUrl = format("%s/%s/%s", TukanoMainApplication.serverURI, Blobs.NAME, shortId);
 			var shrt = new Short(shortId, userId, blobUrl);
 
 			var res = DB.insertOne(shrt);
-			if (AzureProperties.getInstance().isCacheEnabled()) {
-				if (res.isOK())
+			if (AzureProperties.getInstance().isCacheEnabled() && res.isOK()) {
+				try {
 					cacheShrt(res.value().getShortId(), JSON.encode(res.value()));
+				} catch (JedisConnectionException e) {
+					Log.info("Failed to cache short in Redis: " + e.getMessage());
+				} catch (Exception e) {
+					Log.warning("Unexpected error when caching short in Redis: " + e.getMessage());
+				}
 			}
 
 			return errorOrValue(res, s -> s.copyWithLikes_And_Token(0));
 		});
 	}
+
+
 
 	@Override
 	public Result<Short> getShort(String shortId) {
@@ -133,18 +148,36 @@ public class JavaShorts implements Shorts {
 		List<Long> likes;
 
 		if (AzureProperties.getInstance().isCacheEnabled()) {
-			likes = List.of((long) getLikeCount(LIKES_PREFIX + shortId));
-
-			var shrtRes = jedis.get("shrt:" + shortId);
-			if (shrtRes != null)
-				return  errorOrValue( Result.ok(JSON.decode(shrtRes, Short.class)), shrt -> shrt.copyWithLikes_And_Token( likes.get(0)));
-
-			var res = getOne(shortId, Short.class);
-			if (res.isOK()) {
-				cacheShrt(res.value().getShortId(), JSON.encode(res.value()));
+			try {
+				var cachedShrt = jedis.get("shrt:" + shortId);
+				if (cachedShrt != null) {
+					Short decodedShrt = JSON.decode(cachedShrt, Short.class);
+					return ok(decodedShrt.copyWithLikes_And_Token(getLikeCount(shortId)));
+				}
+			} catch (JedisConnectionException e) {
+				Log.warning("Redis cache operation failed in getShort: " + e.getMessage());
 			}
-			return errorOrValue(res, shrt -> shrt.copyWithLikes_And_Token( likes.get(0)));
+
+			// Fallback to database retrieval if cache is unavailable
+			var res = getOne(shortId, Short.class);
+			return errorOrValue(res, shrt -> shrt.copyWithLikes_And_Token(getLikeCount(shortId)));
 		}
+
+
+
+//		if (AzureProperties.getInstance().isCacheEnabled()) {
+//			likes = List.of((long) getLikeCount(LIKES_PREFIX + shortId));
+//
+//			var shrtRes = jedis.get("shrt:" + shortId);
+//			if (shrtRes != null)
+//				return  errorOrValue( Result.ok(JSON.decode(shrtRes, Short.class)), shrt -> shrt.copyWithLikes_And_Token( likes.get(0)));
+//
+//			var res = getOne(shortId, Short.class);
+//			if (res.isOK()) {
+//				cacheShrt(res.value().getShortId(), JSON.encode(res.value()));
+//			}
+//			return errorOrValue(res, shrt -> shrt.copyWithLikes_And_Token( likes.get(0)));
+//		}
 
 		if(AzureProperties.getInstance().isShortsStorageEnabled()) {
 			var query = format("SELECT l.id FROM Likes l WHERE l.shortId = '%s'", shortId);
@@ -221,11 +254,17 @@ public class JavaShorts implements Shorts {
 		Log.info(() -> format("getShorts : userId = %s\n", userId));
 
 		if (AzureProperties.getInstance().isCacheEnabled()) {
-			var cachedHits = jedis.get("getShorts:" + userId);
-			if (cachedHits != null) {
-				List<String> res = JSON.decode(cachedHits, new TypeReference<>() {});
-				return ok(res);
+			try {
+				var cachedHits = jedis.get("getShorts:" + userId);
+				if (cachedHits != null) {
+					List<String> res = JSON.decode(cachedHits, new TypeReference<>() {});
+					return ok(res);
+				}
 			}
+			catch (Exception e) {
+				Log.info("Error in getShorts with message: " + e.getMessage());
+			}
+
 		}
 
 		if(AzureProperties.isShortsStorageEnabled()) {
@@ -307,12 +346,18 @@ public class JavaShorts implements Shorts {
 				var res = errorOrVoid( okUser( userId, password), isLiked ? DB.insertOne( l ) : DB.deleteOne( l ));
 
 				if (AzureProperties.getInstance().isCacheEnabled()) {
-					if (res.isOK()) {
-						if (isLiked)
-							jedis.incr(LIKES_PREFIX + shortId);
-						else if(jedis.get(LIKES_PREFIX + shortId) != null)
-							jedis.decr(LIKES_PREFIX + shortId);
+					try {
+						if (res.isOK()) {
+							if (isLiked)
+								jedis.incr(LIKES_PREFIX + shortId);
+							else if(jedis.get(LIKES_PREFIX + shortId) != null)
+								jedis.decr(LIKES_PREFIX + shortId);
+						}
 					}
+					catch (Exception e) {
+						Log.info("Error in Like post with message:  " + e.getMessage());
+					}
+
 				}
 				return res;
 			});
@@ -325,10 +370,15 @@ public class JavaShorts implements Shorts {
 
 		return errorOrResult( getShort(shortId), shrt -> {
 
-			if (AzureProperties.getInstance().isCacheEnabled()) {
-				var likes = List.of(String.valueOf(getLikeCount(LIKES_PREFIX + shortId)));
-				return  errorOrValue(okUser( shrt.getOwnerId(), password ), likes);
-			}
+//			if (AzureProperties.getInstance().isCacheEnabled()) {
+//				try {
+//					var likes = List.of(String.valueOf(getLikeCount(LIKES_PREFIX + shortId)));
+//					return  errorOrValue(okUser( shrt.getOwnerId(), password ), likes);
+//				}
+//				catch (Exception e) {
+//					Log.info("Error in get Likes post with message:  " + e.getMessage());
+//				}
+//			}
 
 			if(AzureProperties.isShortsStorageEnabled()) {
 				return errorOrResult( okUser(shrt.getOwnerId(), password), user -> {
@@ -358,13 +408,17 @@ public class JavaShorts implements Shorts {
 		Log.info(() -> format("getFeed : userId = %s, pwd = %s\n", userId, password));
 
 		if (AzureProperties.getInstance().isCacheEnabled()) {
-			var cachedHits = jedis.get("getFeed:" + userId);
-			if (cachedHits != null) {
-				List<String> res = JSON.decode(cachedHits, new TypeReference<>() {});
-				return errorOrValue( okUser(userId, password), ok(res));
+			try {
+				var cachedHits = jedis.get("getFeed:" + userId);
+				if (cachedHits != null) {
+					List<String> res = JSON.decode(cachedHits, new TypeReference<>() {});
+					return errorOrValue( okUser(userId, password), ok(res));
+				}
+			}
+			catch (Exception e) {
+				Log.info("Error in getFeed post with message:  " + e.getMessage());
 			}
 		}
-
 
 		return errorOrResult( okUser(userId, password), user -> {
 			// Need to do sequential
@@ -399,13 +453,18 @@ public class JavaShorts implements Shorts {
 					.toList();
 
 
-			if (AzureProperties.getInstance().isCacheEnabled()) jedis.setex("getFeed:" + userId, 60, JSON.encode(feed));
+			if (AzureProperties.getInstance().isCacheEnabled()) {
+				try {
+					jedis.setex("getFeed:" + userId, 60, JSON.encode(feed));
+				}
+				catch (Exception e) {
+					Log.info("Error in getFeed post with message:  " + e.getMessage());
+				}
+			}
 
 			return errorOrValue( okUser( userId, password), feed);
 		});
 	}
-
-	// TODO: Check Cache logic for this method
 
 	@Override
 	public Result<Void> deleteAllShorts(String userId, String password) {
@@ -429,7 +488,15 @@ public class JavaShorts implements Shorts {
 				List<Short> shorts = DB.sql(myShortsQuery, Short.class);
 
 				for(Short s : shorts) {
-					DB.deleteOne(s);
+					var res = DB.deleteOne(s);
+					if(AzureProperties.getInstance().isCacheEnabled()) {
+						try {
+							deleteCachedShrt(s.getShortId(), JSON.encode(res.value()));
+						}
+						catch (Exception e) {
+							Log.info("Error in deleteAllShorts post with message:  " + e.getMessage());
+						}
+					}
 				}
 
 				return Result.ok();

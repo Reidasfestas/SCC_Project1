@@ -86,9 +86,9 @@ public class AzureProperties
 
 	public static String getCacheKey() {
 		if(EUROPE_REGION) {
-			return BLOB_CONNECTION_EUROPE;
+			return REDIS_KEY_EUROPE;
 		}
-		return BLOB_CONNECTION_US;
+		return REDIS_KEY_US;
 	}
 
 	public static String getCacheUrl() {
