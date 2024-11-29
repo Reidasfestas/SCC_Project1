@@ -1,0 +1,119 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tp2-back
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tp2-back
+  template:
+    metadata:
+      labels:
+        app: tp2-back
+    spec:
+      nodeSelector:
+        "kubernetes.io/os": linux
+      containers:
+        - name: tp2-back
+          image: redis
+          env:
+            - name: ALLOW_EMPTY_PASSWORD
+              value: "yes"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          ports:
+            - containerPort: 6379
+              name: redis
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tp2-back
+spec:
+  ports:
+    - port: 6379
+  selector:
+    app: tp2-back
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tp2-front
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tp2-front
+  template:
+    metadata:
+      labels:
+        app: tp2-front
+    spec:
+      nodeSelector:
+        "kubernetes.io/os": linux
+      containers:
+        - name: tp2-front
+          image: alexmadeira23/tp2
+          volumeMounts:
+            - mountPath: "/mnt/volume"
+              name: mediavolume
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 1024Mi
+          ports:
+            - containerPort: 8080
+          env:
+            - name: REDIS
+              value: "redis://tp2-back:6379"
+            - name: BlobStoreConnection
+              value: "DefaultEndpointsProtocol=https;AccountName=sccstwesteurope67211;AccountKey=x9oV/LNwkqUEsM2KIN1Dft37I6NxJMkybQITmUw6mRKS2Fw9AwpvwdrELNBqJmUbGIt/JiAfk9zN+AStxQfWSg==;EndpointSuffix=core.windows.net"
+            - name: COSMOSDB_KEY
+              value: "I6iMRpnmf6NMcVIL8P52ijvDvbJWqJuhWr1hepg7eFT3CgVRc7HLiyggnuu9GguwZK4hjRoUBdEAACDbAclZnQ=="
+            - name: COSMOSDB_URL
+              value: "https://scc2467211.documents.azure.com:443/"
+            - name: COSMOSDB_DATABASE
+              value: "scc24db67211"
+            - name: SEARCH_SERVICE_KEY
+              value: "4wENaGfgcm9YKwrbgkIImb57rdBFoZCsCGZ3Em8Ox8AzSeBQfZB4"
+            - name: SEARCH_SERVICE_URL
+              value: "https://scc24cs67211.search.windows.net"
+            - name: SEARCH_SERVICE_INDEX
+              value: "cosmosdb-index"
+      volumes:
+        - name: mediavolume
+          persistentVolumeClaim:
+            claimName: azure-managed-disk
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tp2-front
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 8080
+  selector:
+    app: tp2-front
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: azure-managed-disk
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: azurefile
+  resources:
+    requests:
+      storage: 1Gi

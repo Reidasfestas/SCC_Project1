@@ -6,10 +6,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import utils.CosmosContainerName;
 
 @Entity
-@CosmosContainerName("followings")
 public class Following{
 
 	@Id

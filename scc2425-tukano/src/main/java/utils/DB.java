@@ -19,10 +19,6 @@ public class DB {
 		database = HibernateDatabase.getInstance();
 	}
 
-	public static void configureCosmosDB() {
-		database = CosmosDatabase.getInstance();
-	}
-
 	public static <T> List<T> sql(String query, Class<T> clazz) {
 		return database.sql(query, clazz);
 	}

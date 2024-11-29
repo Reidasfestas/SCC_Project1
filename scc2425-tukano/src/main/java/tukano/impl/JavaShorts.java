@@ -17,7 +17,6 @@ import java.util.UUID;
 import java.util.logging.Logger;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import AzureSetUp.AzureProperties;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import tukano.api.Blobs;
@@ -54,14 +53,11 @@ public class JavaShorts implements Shorts {
 		return instance;
 	}
 
+	//TODO resolve redis
 	private JavaShorts() {
-		if(AzureProperties.getInstance().isShortsStorageEnabled()) {
-			DB.configureCosmosDB();
-		}
-		else {
-			DB.configureHibernateDB();
-		}
-		if (AzureProperties.getInstance().isCacheEnabled())
+		DB.configureHibernateDB();
+
+		if (false)
 			jedis = RedisCache.getCachePool().getResource();
 	}
 
@@ -122,7 +118,7 @@ public class JavaShorts implements Shorts {
 			var shrt = new Short(shortId, userId, blobUrl);
 
 			var res = DB.insertOne(shrt);
-			if (AzureProperties.getInstance().isCacheEnabled() && res.isOK()) {
+			if (false && res.isOK()) {
 				try {
 					cacheShrt(res.value().getShortId(), JSON.encode(res.value()));
 				} catch (JedisConnectionException e) {
@@ -147,7 +143,7 @@ public class JavaShorts implements Shorts {
 
 		List<Long> likes;
 
-		if (AzureProperties.getInstance().isCacheEnabled()) {
+		if (false) {
 			try {
 				var cachedShrt = jedis.get("shrt:" + shortId);
 				if (cachedShrt != null) {
@@ -164,34 +160,9 @@ public class JavaShorts implements Shorts {
 		}
 
 
-
-//		if (AzureProperties.getInstance().isCacheEnabled()) {
-//			likes = List.of((long) getLikeCount(LIKES_PREFIX + shortId));
-//
-//			var shrtRes = jedis.get("shrt:" + shortId);
-//			if (shrtRes != null)
-//				return  errorOrValue( Result.ok(JSON.decode(shrtRes, Short.class)), shrt -> shrt.copyWithLikes_And_Token( likes.get(0)));
-//
-//			var res = getOne(shortId, Short.class);
-//			if (res.isOK()) {
-//				cacheShrt(res.value().getShortId(), JSON.encode(res.value()));
-//			}
-//			return errorOrValue(res, shrt -> shrt.copyWithLikes_And_Token( likes.get(0)));
-//		}
-
-		if(AzureProperties.getInstance().isShortsStorageEnabled()) {
-			var query = format("SELECT l.id FROM Likes l WHERE l.shortId = '%s'", shortId);
-			var likesList = DB.sql(query, Likes.class);
-
-			long likeCount = likesList.size();
-
-			return errorOrValue( DB.getOne(shortId, Short.class), shrt -> shrt.copyWithLikes_And_Token( likeCount ));
-		}
-		else {
-			var query = format("SELECT count(*) FROM Likes l WHERE l.shortId = '%s'", shortId);
-			var likesVar = DB.sql(query, Long.class);
-			return errorOrValue( getOne(shortId, Short.class), shrt -> shrt.copyWithLikes_And_Token( likesVar.get(0)));
-		}
+		var query = format("SELECT count(*) FROM Likes l WHERE l.shortId = '%s'", shortId);
+		var likesVar = DB.sql(query, Long.class);
+		return errorOrValue( getOne(shortId, Short.class), shrt -> shrt.copyWithLikes_And_Token( likesVar.get(0)));
 
 
 	}
@@ -205,45 +176,19 @@ public class JavaShorts implements Shorts {
 
 			return errorOrResult(okUser(shrt.getOwnerId(), password), user -> {
 
-				if (AzureProperties.getInstance().isShortsStorageEnabled()) {
-					var query = format("select l.id FROM Likes l WHERE l.shortId = '%s'", shortId);
-					List<Likes> likes = DB.sql(query, Likes.class);
+				return DB.transaction(hibernate -> {
+					hibernate.remove(shrt);
 
-					Log.info("Likes size: " + likes.size());
+					var query = format("DELETE FROM Likes l WHERE l.shortId = '%s'", shortId);
+					hibernate.createNativeQuery(query, Likes.class).executeUpdate();
 
-					for (Likes like : likes) {
-						var res = DB.deleteOne(like);
-						if (AzureProperties.getInstance().isCacheEnabled() && res.isOK()) {
-							jedis.decr(LIKES_PREFIX + shortId);
-						}
-					}
-
-					JavaBlobs.getInstance().delete(shrt.getBlobUrl(), Token.get());
-					var res = DB.deleteOne(shrt);
-
-					if (AzureProperties.getInstance().isCacheEnabled() && res.isOK()) {
+					var res = JavaBlobs.getInstance().delete(shrt.getBlobUrl(), Token.get());
+					if (false && res.isOK()) {
 						deleteCachedShrt(shortId, JSON.encode(res.value()));
 
 						jedis.del(LIKES_PREFIX + shortId);
 					}
-
-					return Result.ok();
-
-				} else {
-					return DB.transaction(hibernate -> {
-						hibernate.remove(shrt);
-
-						var query = format("DELETE FROM Likes l WHERE l.shortId = '%s'", shortId);
-						hibernate.createNativeQuery(query, Likes.class).executeUpdate();
-
-						var res = JavaBlobs.getInstance().delete(shrt.getBlobUrl(), Token.get());
-						if (AzureProperties.getInstance().isCacheEnabled() && res.isOK()) {
-							deleteCachedShrt(shortId, JSON.encode(res.value()));
-
-							jedis.del(LIKES_PREFIX + shortId);
-						}
-					});
-				}
+				});
 			});
 		});
 	}
@@ -253,7 +198,7 @@ public class JavaShorts implements Shorts {
 	public Result<List<String>> getShorts(String userId) {
 		Log.info(() -> format("getShorts : userId = %s\n", userId));
 
-		if (AzureProperties.getInstance().isCacheEnabled()) {
+		if (false) {
 			try {
 				var cachedHits = jedis.get("getShorts:" + userId);
 				if (cachedHits != null) {
@@ -267,23 +212,8 @@ public class JavaShorts implements Shorts {
 
 		}
 
-		if(AzureProperties.isShortsStorageEnabled()) {
-			var query = format("SELECT s.id FROM Short s WHERE s.ownerId = '%s'", userId);
-			List<Short> shorts = DB.sql(query, Short.class);
-
-			List<String> shortIds = shorts.stream()
-					.map(Short::getShortId)
-					.collect(Collectors.toList());
-
-			if (AzureProperties.getInstance().isCacheEnabled())
-				jedis.setex("getShorts:" + userId, 60, JSON.encode(shortIds));
-
-			return errorOrValue(okUser(userId), shortIds);
-		}
-		else {
-			var query = format("SELECT s.id FROM Short s WHERE s.ownerId = '%s'", userId);
-			return errorOrValue( okUser(userId), DB.sql( query, String.class));
-		}
+		var query = format("SELECT s.id FROM Short s WHERE s.ownerId = '%s'", userId);
+		return errorOrValue( okUser(userId), DB.sql( query, String.class));
 	}
 
 	@Override
@@ -304,7 +234,7 @@ public class JavaShorts implements Shorts {
 	public Result<List<String>> followers(String userId, String password) {
 		Log.info(() -> format("followers : userId = %s, pwd = %s\n", userId, password));
 
-		if (AzureProperties.getInstance().isCacheEnabled()) {
+		if (false) {
 			var cachedHits = jedis.get("followers:" + userId);
 			if (cachedHits != null) {
 				List<String> res = JSON.decode(cachedHits, new TypeReference<>() {});
@@ -313,24 +243,8 @@ public class JavaShorts implements Shorts {
 		}
 
 		return errorOrResult( okUser(userId, password), user -> {
-
-			if(AzureProperties.isShortsStorageEnabled()) {
-				var query = format("SELECT f.follower FROM Following f WHERE f.followee = '%s'", userId);
-
-				List<Following> shorts = DB.sql(query, Following.class);
-
-				List<String> followerIds = shorts.stream()
-						.map(Following::getFollower)
-						.toList();
-
-				if (AzureProperties.getInstance().isCacheEnabled()) jedis.setex("followers:" + userId, 60, JSON.encode(followerIds));
-
-				return errorOrValue( okUser(userId, password), followerIds);
-			}
-			else {
-				var query = format("SELECT f.follower FROM Following f WHERE f.followee = '%s'", userId);
-				return errorOrValue( okUser(userId, password), DB.sql(query, String.class));
-			}
+			var query = format("SELECT f.follower FROM Following f WHERE f.followee = '%s'", userId);
+			return errorOrValue( okUser(userId, password), DB.sql(query, String.class));
 		});
 	}
 
@@ -345,7 +259,7 @@ public class JavaShorts implements Shorts {
 
 				var res = errorOrVoid( okUser( userId, password), isLiked ? DB.insertOne( l ) : DB.deleteOne( l ));
 
-				if (AzureProperties.getInstance().isCacheEnabled()) {
+				if (false) {
 					try {
 						if (res.isOK()) {
 							if (isLiked)
@@ -380,26 +294,8 @@ public class JavaShorts implements Shorts {
 //				}
 //			}
 
-			if(AzureProperties.isShortsStorageEnabled()) {
-				return errorOrResult( okUser(shrt.getOwnerId(), password), user -> {
-
-					var query = format("SELECT l.userId FROM Likes l WHERE l.shortId = '%s'", shortId);
-
-					List<Likes> likes = DB.sql(query, Likes.class);
-
-					List<String> userIds = likes.stream()
-							.map(Likes::getUserId)  // Assuming Short has a getId() method
-							.toList();
-
-					return errorOrValue( okUser( shrt.getOwnerId(), password ), userIds );
-				});
-			}
-			else {
-				var query = format("SELECT l.userId FROM Likes l WHERE l.shortId = '%s'", shortId);
-				return errorOrValue( okUser( shrt.getOwnerId(), password ), DB.sql(query, String.class));
-			}
-
-
+			var query = format("SELECT l.userId FROM Likes l WHERE l.shortId = '%s'", shortId);
+			return errorOrValue( okUser( shrt.getOwnerId(), password ), DB.sql(query, String.class));
 		});
 	}
 
@@ -407,7 +303,7 @@ public class JavaShorts implements Shorts {
 	public Result<List<String>> getFeed(String userId, String password) {
 		Log.info(() -> format("getFeed : userId = %s, pwd = %s\n", userId, password));
 
-		if (AzureProperties.getInstance().isCacheEnabled()) {
+		if (false) {
 			try {
 				var cachedHits = jedis.get("getFeed:" + userId);
 				if (cachedHits != null) {
@@ -453,7 +349,7 @@ public class JavaShorts implements Shorts {
 					.toList();
 
 
-			if (AzureProperties.getInstance().isCacheEnabled()) {
+			if (false) {
 				try {
 					jedis.setex("getFeed:" + userId, 60, JSON.encode(feed));
 				}
@@ -471,52 +367,20 @@ public class JavaShorts implements Shorts {
 		Log.info(() -> format("deleteAllShorts : userId = %s\n", userId));
 
 		return errorOrResult( okUser(userId, password), user -> {
-            if(AzureProperties.getInstance().isShortsStorageEnabled()) {
-				var myFollowingsQuery = format("SELECT * FROM Following f WHERE f.follower = '%s' OR f.followee = '%s'", userId, userId);
-				List<Following> followings = DB.sql(myFollowingsQuery, Following.class);
-				for(Following f : followings) {
-					DB.deleteOne(f);
-				}
+			return DB.transaction( (hibernate) -> {
 
-				var myLikesQuery = format("SELECT * FROM Likes l WHERE l.ownerId = '%s' OR l.userId = '%s'", userId, userId);
-				List<Likes> likes = DB.sql(myLikesQuery, Likes.class);
-				for(Likes l : likes) {
-					DB.deleteOne(l);
-				}
+				//delete shorts
+				var query1 = format("DELETE FROM Short s WHERE s.ownerId = '%s'", userId);
+				hibernate.createNativeQuery(query1, Short.class).executeUpdate();
 
-				var myShortsQuery = format("SELECT * FROM Short s WHERE s.ownerId = '%s'", userId);
-				List<Short> shorts = DB.sql(myShortsQuery, Short.class);
+				//delete follows
+				var query2 = format("DELETE FROM Following f WHERE f.follower = '%s' OR f.followee = '%s'", userId, userId);
+				hibernate.createNativeQuery(query2, Following.class).executeUpdate();
 
-				for(Short s : shorts) {
-					var res = DB.deleteOne(s);
-					if(AzureProperties.getInstance().isCacheEnabled()) {
-						try {
-							deleteCachedShrt(s.getShortId(), JSON.encode(res.value()));
-						}
-						catch (Exception e) {
-							Log.info("Error in deleteAllShorts post with message:  " + e.getMessage());
-						}
-					}
-				}
-
-				return Result.ok();
-			}
-			else {
-				return DB.transaction( (hibernate) -> {
-
-					//delete shorts
-					var query1 = format("DELETE FROM Short s WHERE s.ownerId = '%s'", userId);
-					hibernate.createNativeQuery(query1, Short.class).executeUpdate();
-
-					//delete follows
-					var query2 = format("DELETE FROM Following f WHERE f.follower = '%s' OR f.followee = '%s'", userId, userId);
-					hibernate.createNativeQuery(query2, Following.class).executeUpdate();
-
-					//delete likes
-					var query3 = format("DELETE FROM Likes l WHERE l.ownerId = '%s' OR l.userId = '%s'", userId, userId);
-					hibernate.createNativeQuery(query3, Likes.class).executeUpdate();
-				});
-			}
+				//delete likes
+				var query3 = format("DELETE FROM Likes l WHERE l.ownerId = '%s' OR l.userId = '%s'", userId, userId);
+				hibernate.createNativeQuery(query3, Likes.class).executeUpdate();
+			});
 		});
 	}
 }

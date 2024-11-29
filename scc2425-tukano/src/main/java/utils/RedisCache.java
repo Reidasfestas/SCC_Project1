@@ -1,6 +1,5 @@
 package utils;
 
-import AzureSetUp.AzureProperties;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 
@@ -26,7 +25,7 @@ public class RedisCache {
 		poolConfig.setTestWhileIdle(true);
 		poolConfig.setNumTestsPerEvictionRun(3);
 		poolConfig.setBlockWhenExhausted(true);
-		instance = new JedisPool(poolConfig, AzureProperties.getCacheUrl(), REDIS_PORT, REDIS_TIMEOUT, AzureProperties.getCacheKey(), Redis_USE_TLS);
+		//instance = new JedisPool(poolConfig, AzureProperties.getCacheUrl(), REDIS_PORT, REDIS_TIMEOUT, AzureProperties.getCacheKey(), Redis_USE_TLS);
 		return instance;
 	}
 

@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import AzureSetUp.AzureProperties;
 import redis.clients.jedis.Jedis;
 import tukano.api.Result;
 import tukano.api.User;
@@ -39,14 +38,11 @@ public class JavaUsers implements Users {
 		return instance;
 	}
 
+	//TODO resolve redis cache
 	private JavaUsers() {
-		if(AzureProperties.getInstance().isUsersCosmosDBEnabled()) {
-			DB.configureCosmosDB();
-		}
-		else {
-			DB.configureHibernateDB();
-		}
-		if (AzureProperties.getInstance().isCacheEnabled())
+		DB.configureHibernateDB();
+
+		if (false)
 			jedis = RedisCache.getCachePool().getResource();
 	}
 
@@ -58,7 +54,7 @@ public class JavaUsers implements Users {
 			return error(BAD_REQUEST);
 
 		var res = DB.insertOne( user );
-		if (AzureProperties.getInstance().isCacheEnabled()) {
+		if (false) {
 			if (res.isOK())
 				cacheUser(res.value().getUserId(), JSON.encode(res.value()));
 		}
@@ -72,7 +68,7 @@ public class JavaUsers implements Users {
 
 		if (userId == null) return error(BAD_REQUEST);
 
-		if (AzureProperties.getInstance().isCacheEnabled()) {
+		if (false) {
 			try {
 				var userJson = jedis.get("user:" + userId);
 				if (userJson != null) {
@@ -101,7 +97,7 @@ public class JavaUsers implements Users {
 		if (badUpdateUserInfo(userId, pwd, other)) return error(BAD_REQUEST);
 
 		var res = validatedUserOrError(DB.getOne(userId, User.class), pwd);
-		if (AzureProperties.getInstance().isCacheEnabled()) {
+		if (false) {
 			try {
 				if (res.isOK()) cacheUser(res.value().getUserId(), JSON.encode(other));
 			} catch (Exception e) {
@@ -124,7 +120,7 @@ public class JavaUsers implements Users {
 			JavaShorts.getInstance().deleteAllShorts(userId, pwd);
 
 			var res = DB.deleteOne(user);
-			if (AzureProperties.getInstance().isCacheEnabled() && res.isOK()) {
+			if (false) {
 				try {
 					deleteCachedUser(res.value().getUserId(), JSON.encode(res.value()));
 				} catch (Exception e) {
@@ -140,7 +136,7 @@ public class JavaUsers implements Users {
 	public Result<List<User>> searchUsers(String pattern) {
 		Log.info(() -> format("searchUsers : pattern = %s\n", pattern));
 
-		if (AzureProperties.getInstance().isCacheEnabled()) {
+		if (false) {
 			try {
 				var cachedHits = jedis.get("searchUsers:" + pattern.toUpperCase());
 				if (cachedHits != null) {
@@ -167,7 +163,7 @@ public class JavaUsers implements Users {
 				.map(User::copyWithoutPassword)
 				.toList();
 
-		if (AzureProperties.getInstance().isCacheEnabled()) {
+		if (false) {
 			try {
 				jedis.setex("searchUsers:" + pattern.toUpperCase(), 60, JSON.encode(hits));
 			} catch (Exception e) {

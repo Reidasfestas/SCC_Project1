@@ -1,6 +1,5 @@
 package utils;
 
-import AzureSetUp.AzureProperties;
 import com.fasterxml.jackson.core.type.TypeReference;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Cookie;
@@ -81,7 +80,8 @@ public class Authentication {
 
 		Session session = null;
 
-		if (AzureProperties.getInstance().isCacheEnabled()) {
+		//TODO make this usable
+		if (false) {
 			try {
 				String hit = RedisCache.getCachePool().getResource().get(cookie.getValue());
 				if (hit != null) {

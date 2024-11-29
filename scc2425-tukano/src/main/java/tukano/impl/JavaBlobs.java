@@ -7,12 +7,9 @@ import static tukano.api.Result.ErrorCode.FORBIDDEN;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
-import AzureSetUp.AzureProperties;
 import tukano.api.Blobs;
 import tukano.api.Result;
 import tukano.api.User;
-import tukano.impl.rest.TukanoRestServer;
-import tukano.impl.storage.AzureBlobStorage;
 import tukano.impl.storage.BlobStorage;
 import tukano.impl.storage.FilesystemStorage;
 import utils.Hash;
@@ -34,14 +31,10 @@ public class JavaBlobs implements Blobs {
 	}
 
 	private JavaBlobs() {
-		if(AzureProperties.getInstance().isBlobStorageEnabled()) {
-			storage = new AzureBlobStorage();
-			baseURI = String.format("%s/%s/", TukanoMainApplication.serverURI, Blobs.NAME);
-		}
-		else {
-			storage = new FilesystemStorage();
-			baseURI = String.format("%s/%s/", TukanoMainApplication.serverURI, Blobs.NAME);
-		}
+
+		storage = new FilesystemStorage();
+		baseURI = String.format("%s/%s/", TukanoMainApplication.serverURI, Blobs.NAME);
+
 	}
 
 	@Override

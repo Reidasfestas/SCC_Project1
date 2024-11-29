@@ -6,7 +6,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import tukano.impl.Token;
-import utils.CosmosContainerName;
 
 /**
  * Represents a Short video uploaded by an user.
@@ -18,7 +17,6 @@ import utils.CosmosContainerName;
  *
  */
 @Entity
-@CosmosContainerName("shorts")
 public class Short {
 
 	@Id

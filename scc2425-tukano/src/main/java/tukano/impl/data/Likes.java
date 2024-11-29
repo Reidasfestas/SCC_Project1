@@ -1,14 +1,11 @@
 package tukano.impl.data;
 
 import java.util.Objects;
-import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
-import utils.CosmosContainerName;
 
 @Entity
-@CosmosContainerName("likes")
 public class Likes {
 
 	@Id
