@@ -6,14 +6,13 @@
 	   <property name="hibernate.connection.url">jdbc:postgresql://postgres:5432/tukano_DB</property>
 	   <property name="hibernate.connection.username">username</property>
 	   <property name="hibernate.connection.password">password</property>
-	   <property name="hibernate.dialect">org.hibernate.dialect.PostgreSQLDialect</property>
-
 
 	   <!-- JDBC Database connection settings
 	   <property name="connection.driver_class">org.hsqldb.jdbcDriver</property>
 	   <property name="connection.url">jdbc:hsqldb:mem:tukano</property>
 	   <property name="connection.username">sa</property>
 	   <property name="connection.password"></property>
+		-->
 
 	   <property name="connection.pool_size">64</property>
 
@@ -32,6 +31,6 @@
 	   <mapping class="tukano.api.Short" />
 	   <mapping class="tukano.impl.data.Following" />
 	   <mapping class="tukano.impl.data.Likes" />
-		 -->
+
 	</session-factory>
 </hibernate-configuration>
