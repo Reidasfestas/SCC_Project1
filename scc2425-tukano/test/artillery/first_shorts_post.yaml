@@ -1,5 +1,5 @@
 config:
-  target: http://74.178.105.228/tukano-1/rest
+  target: http://172.205.120.185/tukano-1/rest
   processor: ./shortsTest.js
   phases:
     - name: simple_blob_post

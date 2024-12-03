@@ -39,9 +39,6 @@ public class JavaShorts implements Shorts {
 
 	private static Shorts instance;
 
-	private static final boolean COSMOS_DB = false;
-
-	private static final boolean REDISCACHE = false;
 	private static Jedis jedis;
 	private static final String MOST_RECENT_SHRTS_LIST = "MostRecentShrts";
 	private static final String LIKES_PREFIX = "likes:";
@@ -53,12 +50,10 @@ public class JavaShorts implements Shorts {
 		return instance;
 	}
 
-	//TODO resolve redis
 	private JavaShorts() {
 		DB.configureHibernateDB();
 
-		if (false)
-			jedis = RedisCache.getCachePool().getResource();
+		jedis = RedisCache.getCachePool().getResource();
 	}
 
 	protected Result<User> okUser( String userId, String pwd) {
@@ -118,11 +113,9 @@ public class JavaShorts implements Shorts {
 			var shrt = new Short(shortId, userId, blobUrl);
 
 			var res = DB.insertOne(shrt);
-			if (false && res.isOK()) {
+			if (res.isOK()) {
 				try {
 					cacheShrt(res.value().getShortId(), JSON.encode(res.value()));
-				} catch (JedisConnectionException e) {
-					Log.info("Failed to cache short in Redis: " + e.getMessage());
 				} catch (Exception e) {
 					Log.warning("Unexpected error when caching short in Redis: " + e.getMessage());
 				}
@@ -143,28 +136,19 @@ public class JavaShorts implements Shorts {
 
 		List<Long> likes;
 
-		if (false) {
-			try {
-				var cachedShrt = jedis.get("shrt:" + shortId);
-				if (cachedShrt != null) {
-					Short decodedShrt = JSON.decode(cachedShrt, Short.class);
-					return ok(decodedShrt.copyWithLikes_And_Token(getLikeCount(shortId)));
-				}
-			} catch (JedisConnectionException e) {
-				Log.warning("Redis cache operation failed in getShort: " + e.getMessage());
+		try {
+			var cachedShrt = jedis.get("shrt:" + shortId);
+			if (cachedShrt != null) {
+				Short decodedShrt = JSON.decode(cachedShrt, Short.class);
+				return ok(decodedShrt.copyWithLikes_And_Token(getLikeCount(shortId)));
 			}
-
-			// Fallback to database retrieval if cache is unavailable
-			var res = getOne(shortId, Short.class);
-			return errorOrValue(res, shrt -> shrt.copyWithLikes_And_Token(getLikeCount(shortId)));
+		} catch (JedisConnectionException e) {
+			Log.warning("Redis cache operation failed in getShort: " + e.getMessage());
 		}
 
-
-		var query = format("SELECT count(*) FROM Likes l WHERE l.shortId = '%s'", shortId);
-		var likesVar = DB.sql(query, Long.class);
-		return errorOrValue( getOne(shortId, Short.class), shrt -> shrt.copyWithLikes_And_Token( likesVar.get(0)));
-
-
+		// Fallback to database retrieval if cache is unavailable
+		var res = getOne(shortId, Short.class);
+		return errorOrValue(res, shrt -> shrt.copyWithLikes_And_Token(getLikeCount(shortId)));
 	}
 
 
@@ -183,7 +167,7 @@ public class JavaShorts implements Shorts {
 					hibernate.createNativeQuery(query, Likes.class).executeUpdate();
 
 					var res = JavaBlobs.getInstance().delete(shrt.getBlobUrl(), Token.get());
-					if (false && res.isOK()) {
+					if (res.isOK()) {
 						deleteCachedShrt(shortId, JSON.encode(res.value()));
 
 						jedis.del(LIKES_PREFIX + shortId);
@@ -198,18 +182,15 @@ public class JavaShorts implements Shorts {
 	public Result<List<String>> getShorts(String userId) {
 		Log.info(() -> format("getShorts : userId = %s\n", userId));
 
-		if (false) {
-			try {
-				var cachedHits = jedis.get("getShorts:" + userId);
-				if (cachedHits != null) {
-					List<String> res = JSON.decode(cachedHits, new TypeReference<>() {});
-					return ok(res);
-				}
+		try {
+			var cachedHits = jedis.get("getShorts:" + userId);
+			if (cachedHits != null) {
+				List<String> res = JSON.decode(cachedHits, new TypeReference<>() {});
+				return ok(res);
 			}
-			catch (Exception e) {
-				Log.info("Error in getShorts with message: " + e.getMessage());
-			}
-
+		}
+		catch (Exception e) {
+			Log.info("Error in getShorts with message: " + e.getMessage());
 		}
 
 		var query = format("SELECT s.id FROM Short s WHERE s.ownerId = '%s'", userId);
@@ -234,12 +215,10 @@ public class JavaShorts implements Shorts {
 	public Result<List<String>> followers(String userId, String password) {
 		Log.info(() -> format("followers : userId = %s, pwd = %s\n", userId, password));
 
-		if (false) {
-			var cachedHits = jedis.get("followers:" + userId);
-			if (cachedHits != null) {
-				List<String> res = JSON.decode(cachedHits, new TypeReference<>() {});
-				return errorOrValue( okUser(userId, password), ok(res));
-			}
+		var cachedHits = jedis.get("followers:" + userId);
+		if (cachedHits != null) {
+			List<String> res = JSON.decode(cachedHits, new TypeReference<>() {});
+			return errorOrValue( okUser(userId, password), ok(res));
 		}
 
 		return errorOrResult( okUser(userId, password), user -> {
@@ -259,20 +238,18 @@ public class JavaShorts implements Shorts {
 
 				var res = errorOrVoid( okUser( userId, password), isLiked ? DB.insertOne( l ) : DB.deleteOne( l ));
 
-				if (false) {
-					try {
-						if (res.isOK()) {
-							if (isLiked)
-								jedis.incr(LIKES_PREFIX + shortId);
-							else if(jedis.get(LIKES_PREFIX + shortId) != null)
-								jedis.decr(LIKES_PREFIX + shortId);
-						}
+				try {
+					if (res.isOK()) {
+						if (isLiked)
+							jedis.incr(LIKES_PREFIX + shortId);
+						else if(jedis.get(LIKES_PREFIX + shortId) != null)
+							jedis.decr(LIKES_PREFIX + shortId);
 					}
-					catch (Exception e) {
-						Log.info("Error in Like post with message:  " + e.getMessage());
-					}
-
 				}
+				catch (Exception e) {
+					Log.info("Error in Like post with message:  " + e.getMessage());
+				}
+
 				return res;
 			});
 		});
@@ -284,15 +261,13 @@ public class JavaShorts implements Shorts {
 
 		return errorOrResult( getShort(shortId), shrt -> {
 
-//			if (AzureProperties.getInstance().isCacheEnabled()) {
-//				try {
-//					var likes = List.of(String.valueOf(getLikeCount(LIKES_PREFIX + shortId)));
-//					return  errorOrValue(okUser( shrt.getOwnerId(), password ), likes);
-//				}
-//				catch (Exception e) {
-//					Log.info("Error in get Likes post with message:  " + e.getMessage());
-//				}
-//			}
+			try {
+				var likes = List.of(String.valueOf(getLikeCount(LIKES_PREFIX + shortId)));
+				return  errorOrValue(okUser( shrt.getOwnerId(), password ), likes);
+			}
+			catch (Exception e) {
+				Log.info("Error in get Likes post with message:  " + e.getMessage());
+			}
 
 			var query = format("SELECT l.userId FROM Likes l WHERE l.shortId = '%s'", shortId);
 			return errorOrValue( okUser( shrt.getOwnerId(), password ), DB.sql(query, String.class));
@@ -303,17 +278,15 @@ public class JavaShorts implements Shorts {
 	public Result<List<String>> getFeed(String userId, String password) {
 		Log.info(() -> format("getFeed : userId = %s, pwd = %s\n", userId, password));
 
-		if (false) {
-			try {
-				var cachedHits = jedis.get("getFeed:" + userId);
-				if (cachedHits != null) {
-					List<String> res = JSON.decode(cachedHits, new TypeReference<>() {});
-					return errorOrValue( okUser(userId, password), ok(res));
-				}
+		try {
+			var cachedHits = jedis.get("getFeed:" + userId);
+			if (cachedHits != null) {
+				List<String> res = JSON.decode(cachedHits, new TypeReference<>() {});
+				return errorOrValue( okUser(userId, password), ok(res));
 			}
-			catch (Exception e) {
-				Log.info("Error in getFeed post with message:  " + e.getMessage());
-			}
+		}
+		catch (Exception e) {
+			Log.info("Error in getFeed post with message:  " + e.getMessage());
 		}
 
 		return errorOrResult( okUser(userId, password), user -> {
@@ -348,14 +321,11 @@ public class JavaShorts implements Shorts {
 					.map(s -> String.format("shortId: %s; timestamp: %s", s.getShortId(), s.getTimestamp()))
 					.toList();
 
-
-			if (false) {
-				try {
-					jedis.setex("getFeed:" + userId, 60, JSON.encode(feed));
-				}
-				catch (Exception e) {
-					Log.info("Error in getFeed post with message:  " + e.getMessage());
-				}
+			try {
+				jedis.setex("getFeed:" + userId, 60, JSON.encode(feed));
+			}
+			catch (Exception e) {
+				Log.info("Error in getFeed post with message:  " + e.getMessage());
 			}
 
 			return errorOrValue( okUser( userId, password), feed);

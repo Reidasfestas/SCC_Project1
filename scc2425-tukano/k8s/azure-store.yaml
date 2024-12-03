@@ -113,6 +113,9 @@ spec:
         image: fredericosampaio/tukano:latest
         ports:
         - containerPort: 8080
+        volumeMounts:
+          - mountPath: "/mnt/volume"
+            name: mediavolume
         resources:
           requests:
             cpu: 250m
@@ -120,6 +123,10 @@ spec:
           limits:
             cpu: 500m
             memory: 1024Mi
+      volumes:
+        - name: mediavolume
+          persistentVolumeClaim:
+            claimName: azure-managed-disk
 ---
 apiVersion: v1
 kind: Service
@@ -132,4 +139,16 @@ spec:
     targetPort: 8080
   selector:
     app: tukano
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: azure-managed-disk
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: azurefile
+  resources:
+    requests:
+      storage: 1Gi
 

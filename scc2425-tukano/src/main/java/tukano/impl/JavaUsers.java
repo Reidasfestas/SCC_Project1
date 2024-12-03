@@ -25,9 +25,6 @@ public class JavaUsers implements Users {
 
 	private static Users instance;
 
-	private static final boolean COSMOS_DB = false;
-
-	private static final boolean REDISCACHE = false;
 	private static Jedis jedis;
 	private static final String MOST_RECENT_USERS_LIST = "MostRecentUsers";
 	private static final int MAX_CACHED_USERS = 10;
@@ -42,8 +39,7 @@ public class JavaUsers implements Users {
 	private JavaUsers() {
 		DB.configureHibernateDB();
 
-		if (false)
-			jedis = RedisCache.getCachePool().getResource();
+		jedis = RedisCache.getCachePool().getResource();
 	}
 
 	@Override
@@ -54,10 +50,9 @@ public class JavaUsers implements Users {
 			return error(BAD_REQUEST);
 
 		var res = DB.insertOne( user );
-		if (false) {
-			if (res.isOK())
-				cacheUser(res.value().getUserId(), JSON.encode(res.value()));
-		}
+
+		if (res.isOK())
+			cacheUser(res.value().getUserId(), JSON.encode(res.value()));
 
 		return errorOrValue( res, user.getUserId() );
 	}
@@ -68,25 +63,21 @@ public class JavaUsers implements Users {
 
 		if (userId == null) return error(BAD_REQUEST);
 
-		if (false) {
-			try {
-				var userJson = jedis.get("user:" + userId);
-				if (userJson != null) {
-					User user = JSON.decode(userJson, User.class);
-					return validatedUserOrError(ok(user), pwd);
-				}
-			} catch (Exception e) {
-				Log.info("Redis cache lookup failed: " + e.getMessage());
-				// Optionally, handle cache failure by falling back to DB
+		try {
+			var userJson = jedis.get("user:" + userId);
+			if (userJson != null) {
+				User user = JSON.decode(userJson, User.class);
+				return validatedUserOrError(ok(user), pwd);
 			}
-
-			// Fallback to DB if Redis cache fails or user not in cache
-			var res = DB.getOne(userId, User.class);
-			if (res.isOK()) cacheUser(res.value().getUserId(), JSON.encode(res.value()));
-			return validatedUserOrError(res, pwd);
+		} catch (Exception e) {
+			Log.info("Redis cache lookup failed: " + e.getMessage());
+			// Optionally, handle cache failure by falling back to DB
 		}
 
-		return validatedUserOrError(DB.getOne(userId, User.class), pwd);
+		// Fallback to DB if Redis cache fails or user not in cache
+		var res = DB.getOne(userId, User.class);
+		if (res.isOK()) cacheUser(res.value().getUserId(), JSON.encode(res.value()));
+		return validatedUserOrError(res, pwd);
 	}
 
 
@@ -97,12 +88,10 @@ public class JavaUsers implements Users {
 		if (badUpdateUserInfo(userId, pwd, other)) return error(BAD_REQUEST);
 
 		var res = validatedUserOrError(DB.getOne(userId, User.class), pwd);
-		if (false) {
-			try {
-				if (res.isOK()) cacheUser(res.value().getUserId(), JSON.encode(other));
-			} catch (Exception e) {
-				Log.info("Failed to update cache for user: " + userId + ". Error: " + e.getMessage());
-			}
+		try {
+			if (res.isOK()) cacheUser(res.value().getUserId(), JSON.encode(other));
+		} catch (Exception e) {
+			Log.info("Failed to update cache for user: " + userId + ". Error: " + e.getMessage());
 		}
 
 		return errorOrResult(res, user -> DB.updateOne(user.updateFrom(other)));
@@ -119,15 +108,13 @@ public class JavaUsers implements Users {
 			JavaBlobs.getInstance().deleteAllBlobs(userId, pwd);
 			JavaShorts.getInstance().deleteAllShorts(userId, pwd);
 
-			var res = DB.deleteOne(user);
-			if (false) {
-				try {
-					deleteCachedUser(res.value().getUserId(), JSON.encode(res.value()));
-				} catch (Exception e) {
-					Log.info("Failed to delete cache for user: " + userId + ". Error: " + e.getMessage());
-				}
+		var res = DB.deleteOne(user);
+			try {
+				deleteCachedUser(res.value().getUserId(), JSON.encode(res.value()));
+			} catch (Exception e) {
+				Log.info("Failed to delete cache for user: " + userId + ". Error: " + e.getMessage());
 			}
-			return res;
+		return res;
 		});
 	}
 
@@ -136,17 +123,16 @@ public class JavaUsers implements Users {
 	public Result<List<User>> searchUsers(String pattern) {
 		Log.info(() -> format("searchUsers : pattern = %s\n", pattern));
 
-		if (false) {
-			try {
-				var cachedHits = jedis.get("searchUsers:" + pattern.toUpperCase());
-				if (cachedHits != null) {
-					List<User> res = JSON.decode(cachedHits, new TypeReference<>() {});
-					return ok(res);
-				}
-			} catch (Exception e) {
-				Log.info("Failed to retrieve search results from cache for pattern: " + pattern + ". Error: " + e.getMessage());
+		try {
+			var cachedHits = jedis.get("searchUsers:" + pattern.toUpperCase());
+			if (cachedHits != null) {
+				List<User> res = JSON.decode(cachedHits, new TypeReference<>() {});
+				return ok(res);
 			}
+		} catch (Exception e) {
+			Log.info("Failed to retrieve search results from cache for pattern: " + pattern + ". Error: " + e.getMessage());
 		}
+
 
 		if (pattern == null || pattern.trim().isEmpty()) {
 			var query = "SELECT * FROM User";
@@ -163,12 +149,10 @@ public class JavaUsers implements Users {
 				.map(User::copyWithoutPassword)
 				.toList();
 
-		if (false) {
-			try {
-				jedis.setex("searchUsers:" + pattern.toUpperCase(), 60, JSON.encode(hits));
-			} catch (Exception e) {
-				Log.info("Failed to cache search results for pattern: " + pattern + ". Error: " + e.getMessage());
-			}
+		try {
+			jedis.setex("searchUsers:" + pattern.toUpperCase(), 60, JSON.encode(hits));
+		} catch (Exception e) {
+			Log.info("Failed to cache search results for pattern: " + pattern + ". Error: " + e.getMessage());
 		}
 
 		return ok(hits);
