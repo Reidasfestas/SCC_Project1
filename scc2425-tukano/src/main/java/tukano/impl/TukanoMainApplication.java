@@ -1,11 +1,12 @@
 package tukano.impl;
 
 import jakarta.ws.rs.core.Application;
+import tukano.impl.auth.RequestCookies;
+import tukano.impl.auth.RequestCookiesCleanupFilter;
 import tukano.impl.rest.RestBlobsResource;
 import tukano.impl.rest.RestShortsResource;
 import tukano.impl.rest.RestUsersResource;
-import tukano.impl.rest.TukanoRestServer;
-import utils.Args;
+import utils.Authentication;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -24,6 +25,10 @@ public class TukanoMainApplication extends Application
 		resources.add(RestBlobsResource.class);
 		resources.add(RestUsersResource.class);
 		resources.add(RestShortsResource.class);
+
+		resources.add(RequestCookies.class);
+		resources.add(RequestCookiesCleanupFilter.class);
+		resources.add(Authentication.class);
 
 		Token.setSecret("token");
 

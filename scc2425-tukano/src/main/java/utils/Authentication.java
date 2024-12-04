@@ -80,20 +80,14 @@ public class Authentication {
 
 		Session session = null;
 
-		//TODO make this usable
-		if (false) {
-			try {
-				String hit = RedisCache.getCachePool().getResource().get(cookie.getValue());
-				if (hit != null) {
-					session = JSON.decode(hit, Session.class);
-				}
-			} catch (Exception e) {
-				Log.info("Error accessing Redis cache: " + e.getMessage());
+		try {
+			String hit = RedisCache.getCachePool().getResource().get(cookie.getValue());
+			if (hit != null) {
+				session = JSON.decode(hit, Session.class);
 			}
-		} else{
-			session = FakeRedisLayer.getInstance().getSession( cookie.getValue());
+		} catch (Exception e) {
+			Log.info("Error accessing Redis cache: " + e.getMessage());
 		}
-
 
 		if( session == null )
 			throw new NotAuthorizedException("No valid session initialized");
