@@ -135,7 +135,7 @@ public class JavaUsers implements Users {
 
 
 		if (pattern == null || pattern.trim().isEmpty()) {
-			var query = "SELECT * FROM User";
+			var query = "SELECT * FROM Users";
 			var hits = DB.sql(query, User.class)
 					.stream()
 					.map(User::copyWithoutPassword)
@@ -143,7 +143,7 @@ public class JavaUsers implements Users {
 			return ok(hits);
 		}
 
-		var query = format("SELECT * FROM User u WHERE UPPER(u.id) LIKE '%%%s%%'", pattern.toUpperCase());
+		var query = format("SELECT * FROM Users u WHERE UPPER(u.id) LIKE '%%%s%%'", pattern.toUpperCase());
 		var hits = DB.sql(query, User.class)
 				.stream()
 				.map(User::copyWithoutPassword)

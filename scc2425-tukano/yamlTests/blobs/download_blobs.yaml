@@ -1,5 +1,5 @@
 config:
-    target: http://20.166.168.153/tukano-1/rest
+    target: http://135.236.239.64/tukano-1/rest
     phases:
         - name: download_blob
           duration: 30 # adjust to allow sequential posting for each user
