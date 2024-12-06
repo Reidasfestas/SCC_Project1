@@ -1,0 +1,663 @@
+{
+  "aggregate": {
+    "counters": {
+      "vusers.created_by_name.TukanoGetShortss": 30,
+      "vusers.created": 30,
+      "http.requests": 30,
+      "http.codes.200": 30,
+      "http.responses": 30,
+      "http.downloaded_bytes": 2213,
+      "plugins.metrics-by-endpoint./tukano-1/rest/shorts/{{ id }}/shorts.codes.200": 30,
+      "vusers.failed": 0,
+      "vusers.completed": 30
+    },
+    "rates": {
+      "http.request_rate": 1
+    },
+    "firstCounterAt": 1733501926576,
+    "firstHistogramAt": 1733501927017,
+    "lastCounterAt": 1733501955679,
+    "lastHistogramAt": 1733501955679,
+    "firstMetricAt": 1733501926576,
+    "lastMetricAt": 1733501955679,
+    "period": 1733501950000,
+    "summaries": {
+      "http.response_time": {
+        "min": 55,
+        "max": 349,
+        "count": 30,
+        "mean": 68.4,
+        "p50": 58.6,
+        "median": 58.6,
+        "p75": 59.7,
+        "p90": 63.4,
+        "p95": 64.7,
+        "p99": 66,
+        "p999": 66
+      },
+      "http.response_time.2xx": {
+        "min": 55,
+        "max": 349,
+        "count": 30,
+        "mean": 68.4,
+        "p50": 58.6,
+        "median": 58.6,
+        "p75": 59.7,
+        "p90": 63.4,
+        "p95": 64.7,
+        "p99": 66,
+        "p999": 66
+      },
+      "plugins.metrics-by-endpoint.response_time./tukano-1/rest/shorts/{{ id }}/shorts": {
+        "min": 55,
+        "max": 349,
+        "count": 30,
+        "mean": 68.4,
+        "p50": 58.6,
+        "median": 58.6,
+        "p75": 59.7,
+        "p90": 63.4,
+        "p95": 64.7,
+        "p99": 66,
+        "p999": 66
+      },
+      "vusers.session_length": {
+        "min": 98.5,
+        "max": 451.9,
+        "count": 30,
+        "mean": 120,
+        "p50": 108.9,
+        "median": 108.9,
+        "p75": 113.3,
+        "p90": 115.6,
+        "p95": 115.6,
+        "p99": 117.9,
+        "p999": 117.9
+      }
+    },
+    "histograms": {
+      "http.response_time": {
+        "min": 55,
+        "max": 349,
+        "count": 30,
+        "mean": 68.4,
+        "p50": 58.6,
+        "median": 58.6,
+        "p75": 59.7,
+        "p90": 63.4,
+        "p95": 64.7,
+        "p99": 66,
+        "p999": 66
+      },
+      "http.response_time.2xx": {
+        "min": 55,
+        "max": 349,
+        "count": 30,
+        "mean": 68.4,
+        "p50": 58.6,
+        "median": 58.6,
+        "p75": 59.7,
+        "p90": 63.4,
+        "p95": 64.7,
+        "p99": 66,
+        "p999": 66
+      },
+      "plugins.metrics-by-endpoint.response_time./tukano-1/rest/shorts/{{ id }}/shorts": {
+        "min": 55,
+        "max": 349,
+        "count": 30,
+        "mean": 68.4,
+        "p50": 58.6,
+        "median": 58.6,
+        "p75": 59.7,
+        "p90": 63.4,
+        "p95": 64.7,
+        "p99": 66,
+        "p999": 66
+      },
+      "vusers.session_length": {
+        "min": 98.5,
+        "max": 451.9,
+        "count": 30,
+        "mean": 120,
+        "p50": 108.9,
+        "median": 108.9,
+        "p75": 113.3,
+        "p90": 115.6,
+        "p95": 115.6,
+        "p99": 117.9,
+        "p999": 117.9
+      }
+    }
+  },
+  "intermediate": [
+    {
+      "counters": {
+        "vusers.created_by_name.TukanoGetShortss": 4,
+        "vusers.created": 4,
+        "http.requests": 4,
+        "http.codes.200": 4,
+        "http.responses": 4,
+        "http.downloaded_bytes": 202,
+        "plugins.metrics-by-endpoint./tukano-1/rest/shorts/{{ id }}/shorts.codes.200": 4,
+        "vusers.failed": 0,
+        "vusers.completed": 4
+      },
+      "rates": {
+        "http.request_rate": 1
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1733501926576,
+      "firstHistogramAt": 1733501927017,
+      "lastCounterAt": 1733501929681,
+      "lastHistogramAt": 1733501929681,
+      "firstMetricAt": 1733501926576,
+      "lastMetricAt": 1733501929681,
+      "period": "1733501920000",
+      "summaries": {
+        "http.response_time": {
+          "min": 55,
+          "max": 349,
+          "count": 4,
+          "mean": 130,
+          "p50": 56.3,
+          "median": 56.3,
+          "p75": 59.7,
+          "p90": 59.7,
+          "p95": 59.7,
+          "p99": 59.7,
+          "p999": 59.7
+        },
+        "http.response_time.2xx": {
+          "min": 55,
+          "max": 349,
+          "count": 4,
+          "mean": 130,
+          "p50": 56.3,
+          "median": 56.3,
+          "p75": 59.7,
+          "p90": 59.7,
+          "p95": 59.7,
+          "p99": 59.7,
+          "p999": 59.7
+        },
+        "plugins.metrics-by-endpoint.response_time./tukano-1/rest/shorts/{{ id }}/shorts": {
+          "min": 55,
+          "max": 349,
+          "count": 4,
+          "mean": 130,
+          "p50": 56.3,
+          "median": 56.3,
+          "p75": 59.7,
+          "p90": 59.7,
+          "p95": 59.7,
+          "p99": 59.7,
+          "p999": 59.7
+        },
+        "vusers.session_length": {
+          "min": 107.1,
+          "max": 451.9,
+          "count": 4,
+          "mean": 196.2,
+          "p50": 111.1,
+          "median": 111.1,
+          "p75": 113.3,
+          "p90": 113.3,
+          "p95": 113.3,
+          "p99": 113.3,
+          "p999": 113.3
+        }
+      },
+      "histograms": {
+        "http.response_time": {
+          "min": 55,
+          "max": 349,
+          "count": 4,
+          "mean": 130,
+          "p50": 56.3,
+          "median": 56.3,
+          "p75": 59.7,
+          "p90": 59.7,
+          "p95": 59.7,
+          "p99": 59.7,
+          "p999": 59.7
+        },
+        "http.response_time.2xx": {
+          "min": 55,
+          "max": 349,
+          "count": 4,
+          "mean": 130,
+          "p50": 56.3,
+          "median": 56.3,
+          "p75": 59.7,
+          "p90": 59.7,
+          "p95": 59.7,
+          "p99": 59.7,
+          "p999": 59.7
+        },
+        "plugins.metrics-by-endpoint.response_time./tukano-1/rest/shorts/{{ id }}/shorts": {
+          "min": 55,
+          "max": 349,
+          "count": 4,
+          "mean": 130,
+          "p50": 56.3,
+          "median": 56.3,
+          "p75": 59.7,
+          "p90": 59.7,
+          "p95": 59.7,
+          "p99": 59.7,
+          "p999": 59.7
+        },
+        "vusers.session_length": {
+          "min": 107.1,
+          "max": 451.9,
+          "count": 4,
+          "mean": 196.2,
+          "p50": 111.1,
+          "median": 111.1,
+          "p75": 113.3,
+          "p90": 113.3,
+          "p95": 113.3,
+          "p99": 113.3,
+          "p999": 113.3
+        }
+      }
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.TukanoGetShortss": 10,
+        "vusers.created": 10,
+        "http.requests": 10,
+        "http.codes.200": 10,
+        "http.responses": 10,
+        "http.downloaded_bytes": 758,
+        "plugins.metrics-by-endpoint./tukano-1/rest/shorts/{{ id }}/shorts.codes.200": 10,
+        "vusers.failed": 0,
+        "vusers.completed": 10
+      },
+      "rates": {
+        "http.request_rate": 1
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1733501930574,
+      "firstHistogramAt": 1733501930691,
+      "lastCounterAt": 1733501939683,
+      "lastHistogramAt": 1733501939683,
+      "firstMetricAt": 1733501930574,
+      "lastMetricAt": 1733501939683,
+      "period": "1733501930000",
+      "summaries": {
+        "http.response_time": {
+          "min": 55,
+          "max": 66,
+          "count": 10,
+          "mean": 59.8,
+          "p50": 58.6,
+          "median": 58.6,
+          "p75": 59.7,
+          "p90": 64.7,
+          "p95": 64.7,
+          "p99": 64.7,
+          "p999": 64.7
+        },
+        "http.response_time.2xx": {
+          "min": 55,
+          "max": 66,
+          "count": 10,
+          "mean": 59.8,
+          "p50": 58.6,
+          "median": 58.6,
+          "p75": 59.7,
+          "p90": 64.7,
+          "p95": 64.7,
+          "p99": 64.7,
+          "p999": 64.7
+        },
+        "plugins.metrics-by-endpoint.response_time./tukano-1/rest/shorts/{{ id }}/shorts": {
+          "min": 55,
+          "max": 66,
+          "count": 10,
+          "mean": 59.8,
+          "p50": 58.6,
+          "median": 58.6,
+          "p75": 59.7,
+          "p90": 64.7,
+          "p95": 64.7,
+          "p99": 64.7,
+          "p999": 64.7
+        },
+        "vusers.session_length": {
+          "min": 102.4,
+          "max": 118.6,
+          "count": 10,
+          "mean": 110.3,
+          "p50": 111.1,
+          "median": 111.1,
+          "p75": 113.3,
+          "p90": 115.6,
+          "p95": 115.6,
+          "p99": 115.6,
+          "p999": 115.6
+        }
+      },
+      "histograms": {
+        "http.response_time": {
+          "min": 55,
+          "max": 66,
+          "count": 10,
+          "mean": 59.8,
+          "p50": 58.6,
+          "median": 58.6,
+          "p75": 59.7,
+          "p90": 64.7,
+          "p95": 64.7,
+          "p99": 64.7,
+          "p999": 64.7
+        },
+        "http.response_time.2xx": {
+          "min": 55,
+          "max": 66,
+          "count": 10,
+          "mean": 59.8,
+          "p50": 58.6,
+          "median": 58.6,
+          "p75": 59.7,
+          "p90": 64.7,
+          "p95": 64.7,
+          "p99": 64.7,
+          "p999": 64.7
+        },
+        "plugins.metrics-by-endpoint.response_time./tukano-1/rest/shorts/{{ id }}/shorts": {
+          "min": 55,
+          "max": 66,
+          "count": 10,
+          "mean": 59.8,
+          "p50": 58.6,
+          "median": 58.6,
+          "p75": 59.7,
+          "p90": 64.7,
+          "p95": 64.7,
+          "p99": 64.7,
+          "p999": 64.7
+        },
+        "vusers.session_length": {
+          "min": 102.4,
+          "max": 118.6,
+          "count": 10,
+          "mean": 110.3,
+          "p50": 111.1,
+          "median": 111.1,
+          "p75": 113.3,
+          "p90": 115.6,
+          "p95": 115.6,
+          "p99": 115.6,
+          "p999": 115.6
+        }
+      }
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.TukanoGetShortss": 10,
+        "vusers.created": 10,
+        "http.requests": 10,
+        "http.codes.200": 10,
+        "http.responses": 10,
+        "http.downloaded_bytes": 786,
+        "plugins.metrics-by-endpoint./tukano-1/rest/shorts/{{ id }}/shorts.codes.200": 10,
+        "vusers.failed": 0,
+        "vusers.completed": 10
+      },
+      "rates": {
+        "http.request_rate": 1
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1733501940574,
+      "firstHistogramAt": 1733501940672,
+      "lastCounterAt": 1733501949687,
+      "lastHistogramAt": 1733501949687,
+      "firstMetricAt": 1733501940574,
+      "lastMetricAt": 1733501949687,
+      "period": "1733501940000",
+      "summaries": {
+        "http.response_time": {
+          "min": 55,
+          "max": 62,
+          "count": 10,
+          "mean": 57.9,
+          "p50": 57.4,
+          "median": 57.4,
+          "p75": 58.6,
+          "p90": 61,
+          "p95": 61,
+          "p99": 61,
+          "p999": 61
+        },
+        "http.response_time.2xx": {
+          "min": 55,
+          "max": 62,
+          "count": 10,
+          "mean": 57.9,
+          "p50": 57.4,
+          "median": 57.4,
+          "p75": 58.6,
+          "p90": 61,
+          "p95": 61,
+          "p99": 61,
+          "p999": 61
+        },
+        "plugins.metrics-by-endpoint.response_time./tukano-1/rest/shorts/{{ id }}/shorts": {
+          "min": 55,
+          "max": 62,
+          "count": 10,
+          "mean": 57.9,
+          "p50": 57.4,
+          "median": 57.4,
+          "p75": 58.6,
+          "p90": 61,
+          "p95": 61,
+          "p99": 61,
+          "p999": 61
+        },
+        "vusers.session_length": {
+          "min": 98.5,
+          "max": 112.9,
+          "count": 10,
+          "mean": 106.2,
+          "p50": 104.6,
+          "median": 104.6,
+          "p75": 108.9,
+          "p90": 111.1,
+          "p95": 111.1,
+          "p99": 111.1,
+          "p999": 111.1
+        }
+      },
+      "histograms": {
+        "http.response_time": {
+          "min": 55,
+          "max": 62,
+          "count": 10,
+          "mean": 57.9,
+          "p50": 57.4,
+          "median": 57.4,
+          "p75": 58.6,
+          "p90": 61,
+          "p95": 61,
+          "p99": 61,
+          "p999": 61
+        },
+        "http.response_time.2xx": {
+          "min": 55,
+          "max": 62,
+          "count": 10,
+          "mean": 57.9,
+          "p50": 57.4,
+          "median": 57.4,
+          "p75": 58.6,
+          "p90": 61,
+          "p95": 61,
+          "p99": 61,
+          "p999": 61
+        },
+        "plugins.metrics-by-endpoint.response_time./tukano-1/rest/shorts/{{ id }}/shorts": {
+          "min": 55,
+          "max": 62,
+          "count": 10,
+          "mean": 57.9,
+          "p50": 57.4,
+          "median": 57.4,
+          "p75": 58.6,
+          "p90": 61,
+          "p95": 61,
+          "p99": 61,
+          "p999": 61
+        },
+        "vusers.session_length": {
+          "min": 98.5,
+          "max": 112.9,
+          "count": 10,
+          "mean": 106.2,
+          "p50": 104.6,
+          "median": 104.6,
+          "p75": 108.9,
+          "p90": 111.1,
+          "p95": 111.1,
+          "p99": 111.1,
+          "p999": 111.1
+        }
+      }
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.TukanoGetShortss": 6,
+        "vusers.created": 6,
+        "http.requests": 6,
+        "http.codes.200": 6,
+        "http.responses": 6,
+        "http.downloaded_bytes": 467,
+        "plugins.metrics-by-endpoint./tukano-1/rest/shorts/{{ id }}/shorts.codes.200": 6,
+        "vusers.failed": 0,
+        "vusers.completed": 6
+      },
+      "rates": {
+        "http.request_rate": 1
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1733501950574,
+      "firstHistogramAt": 1733501950684,
+      "lastCounterAt": 1733501955679,
+      "lastHistogramAt": 1733501955679,
+      "firstMetricAt": 1733501950574,
+      "lastMetricAt": 1733501955679,
+      "period": "1733501950000",
+      "summaries": {
+        "http.response_time": {
+          "min": 55,
+          "max": 64,
+          "count": 6,
+          "mean": 59,
+          "p50": 58.6,
+          "median": 58.6,
+          "p75": 58.6,
+          "p90": 59.7,
+          "p95": 59.7,
+          "p99": 59.7,
+          "p999": 59.7
+        },
+        "http.response_time.2xx": {
+          "min": 55,
+          "max": 64,
+          "count": 6,
+          "mean": 59,
+          "p50": 58.6,
+          "median": 58.6,
+          "p75": 58.6,
+          "p90": 59.7,
+          "p95": 59.7,
+          "p99": 59.7,
+          "p999": 59.7
+        },
+        "plugins.metrics-by-endpoint.response_time./tukano-1/rest/shorts/{{ id }}/shorts": {
+          "min": 55,
+          "max": 64,
+          "count": 6,
+          "mean": 59,
+          "p50": 58.6,
+          "median": 58.6,
+          "p75": 58.6,
+          "p90": 59.7,
+          "p95": 59.7,
+          "p99": 59.7,
+          "p999": 59.7
+        },
+        "vusers.session_length": {
+          "min": 104.2,
+          "max": 116.2,
+          "count": 6,
+          "mean": 108.1,
+          "p50": 104.6,
+          "median": 104.6,
+          "p75": 106.7,
+          "p90": 111.1,
+          "p95": 111.1,
+          "p99": 111.1,
+          "p999": 111.1
+        }
+      },
+      "histograms": {
+        "http.response_time": {
+          "min": 55,
+          "max": 64,
+          "count": 6,
+          "mean": 59,
+          "p50": 58.6,
+          "median": 58.6,
+          "p75": 58.6,
+          "p90": 59.7,
+          "p95": 59.7,
+          "p99": 59.7,
+          "p999": 59.7
+        },
+        "http.response_time.2xx": {
+          "min": 55,
+          "max": 64,
+          "count": 6,
+          "mean": 59,
+          "p50": 58.6,
+          "median": 58.6,
+          "p75": 58.6,
+          "p90": 59.7,
+          "p95": 59.7,
+          "p99": 59.7,
+          "p999": 59.7
+        },
+        "plugins.metrics-by-endpoint.response_time./tukano-1/rest/shorts/{{ id }}/shorts": {
+          "min": 55,
+          "max": 64,
+          "count": 6,
+          "mean": 59,
+          "p50": 58.6,
+          "median": 58.6,
+          "p75": 58.6,
+          "p90": 59.7,
+          "p95": 59.7,
+          "p99": 59.7,
+          "p999": 59.7
+        },
+        "vusers.session_length": {
+          "min": 104.2,
+          "max": 116.2,
+          "count": 6,
+          "mean": 108.1,
+          "p50": 104.6,
+          "median": 104.6,
+          "p75": 106.7,
+          "p90": 111.1,
+          "p95": 111.1,
+          "p99": 111.1,
+          "p999": 111.1
+        }
+      }
+    }
+  ]
+}
