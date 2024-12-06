@@ -1,11 +1,11 @@
 config:
-    target: https://scc-tukano-60019-backend.azurewebsites.net/rest
+    target: http://20.166.168.153/tukano-1/rest
     phases:
         - name: get_shorId
           duration: 30 # adjust to allow sequential posting for each user
           arrivalRate: 1 # post one user at a time to avoid duplicates
     payload:
-        path: ./data/users.csv
+        path: ../data/users.csv
         order: sequence # selects users sequentially, default is random
         skipHeader: true # Skip header row
         delimiter: "," # standard delimiter

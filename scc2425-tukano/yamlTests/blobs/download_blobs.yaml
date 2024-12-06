@@ -1,11 +1,11 @@
 config:
-    target: https://scc-tukano-60019-backend.azurewebsites.net/rest
+    target: http://20.166.168.153/tukano-1/rest
     phases:
         - name: download_blob
           duration: 30 # adjust to allow sequential posting for each user
           arrivalRate: 1 # post one user at a time to avoid duplicates
     payload:
-        path: ./data/users.csv
+        path: ../data/users.csv
         order: sequence # selects users sequentially, default is random
         skipHeader: true # Skip header row
         delimiter: "," # standard delimiter
@@ -18,7 +18,19 @@ config:
 scenarios:
     - name: TukanoDownload
       flow:
-          - post:
+        - post:
+          url: "/login"
+          headers:
+            Content-Type: application/json
+          body: |
+            {
+              "username": "{{ id }}",
+              "password": "{{ pwd }}"
+            }
+          capture:
+            - header: "Set-Cookie"
+              as: "authCookie" # Capture the auth cookie
+        - post:
                 url: "/shorts/{{ id }}?pwd={{ pwd }}"
                 headers:
                     Content-Type: application/json
@@ -27,12 +39,14 @@ scenarios:
                     as: "shortId"
                   - json: "$.blobUrl"
                     as: "blobUrl"
-          - post:
+        - post:
               url: "/blobs/{{ id }}?token={{ blobUrl }}"
               headers:
                 Content-Type: application/octet-stream
+                Cookie: "{{ authCookie }}" # Include the captured cookie
                 body: \x00\x01\x02\x03\x04
-          - get:
+        - get:
               url: "/blobs/{{ id }}?token={{ blobUrl }}"
               headers:
                 Content-Type: application/octet-stream
+                Cookie: "{{ authCookie }}" # Include the captured cookie

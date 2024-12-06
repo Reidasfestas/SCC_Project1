@@ -4,7 +4,7 @@
 # http.codes.409 - 10
 
 config:
-  target: "http://172.205.120.185/tukano-1/rest"
+  target: "http://4.208.88.34/tukano-1/rest"
   phases:
     - duration: 40
       arrivalRate: 1
