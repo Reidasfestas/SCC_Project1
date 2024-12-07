@@ -110,7 +110,7 @@ spec:
         "kubernetes.io/os": linux
       containers:
       - name: tukano
-        image: fredericosampaio/tukano:latest
+        image: reidasfestas/scc2425-tukano:latest
         ports:
         - containerPort: 8080
         volumeMounts:

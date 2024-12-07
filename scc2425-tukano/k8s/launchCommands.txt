@@ -1,0 +1,20 @@
+docker build -t reidasfestas/scc2425-tukano .
+docker push reidasfestas/scc2425-tukano:latest
+az group create --name scc2425-tukano --location northeurope
+az ad sp create-for-rbac --name http://scc2425-tukano --role Contributor --scope /subscriptions/<id_of_your_subscription>
+az aks create --resource-group scc2425-tukano --name scc2425-cluster --node-vm-size Standard_B2s --generate-ssh-keys --node-count 2 --service-principal <appId_REPLACE> --client-secret <password_REPLACE>
+az aks get-credentials --resource-group scc2425-tukano --name scc2425-cluster
+kubectl apply -f azure-store.yaml
+
+
+
+
+
+
+
+
+kubectl delete deployments,services,pods --all
+
+
+kubectl set image deployment/tukano tukano=reidasfestas/scc2425-tukano:latest
+kubectl rollout status deployment/tukano
