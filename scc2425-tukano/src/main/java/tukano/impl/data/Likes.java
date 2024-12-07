@@ -9,16 +9,12 @@ import jakarta.persistence.*;
 public class Likes {
 
 	@Id
-	@JsonProperty("id")
-	@Column(name = "id")
 	String id;
 	
 	@Id
-	@Column(name = "userId")
 	String userId;
 	
 	@Id
-	@Column(name = "shortId")
 	String shortId;
 	
 	public String getOwnerId() {
@@ -29,7 +25,6 @@ public class Likes {
 		this.ownerId = ownerId;
 	}
 
-	@Column(name = "ownerId")
 	String ownerId;
 	
 	public Likes() {}

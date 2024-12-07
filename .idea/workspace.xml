@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="141666ad-75e6-4cd9-b82e-586543243d70" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/scc2425-tukano/src/main/java/tukano/impl/JavaShorts.java" beforeDir="false" afterPath="$PROJECT_DIR$/scc2425-tukano/src/main/java/tukano/impl/JavaShorts.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scc2425-tukano/src/main/java/tukano/impl/data/Likes.java" beforeDir="false" afterPath="$PROJECT_DIR$/scc2425-tukano/src/main/java/tukano/impl/data/Likes.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scc2425-tukano/src/main/java/utils/Authentication.java" beforeDir="false" afterPath="$PROJECT_DIR$/scc2425-tukano/src/main/java/utils/Authentication.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scc2425-tukano/yamlTests/blobs/post_blobs.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/scc2425-tukano/yamlTests/blobs/post_blobs.yaml" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="KubernetesApiPersistence"><![CDATA[{}]]></component>
+  <component name="KubernetesApiProvider"><![CDATA[{
+  "isMigrated": true
+}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 1
+}</component>
+  <component name="ProjectId" id="2n4IhuNZR0jmh8EVqNEZZOXDrMM" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "project2-Fred",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "/home/bruno/Classes/SCC/SCC_Project1/scc2425-tukano/artillery-docker/scripts",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "tukano.wasFacetEverAdded": "true",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/scc2425-tukano/artillery-docker/scripts" />
+      <recent name="$PROJECT_DIR$/scc2425-tukano/yamlTests/blobs" />
+      <recent name="$PROJECT_DIR$/scc2425-tukano/yamlTests" />
+      <recent name="$PROJECT_DIR$/scc2425-tukano" />
+      <recent name="$PROJECT_DIR$" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/scc2425-tukano/yamlTests/blobs" />
+      <recent name="$PROJECT_DIR$/scc2425-tukano" />
+    </key>
+  </component>
+  <component name="RunManager">
+    <configuration default="true" type="AZURE_FUNCTION_SUPPORT" factoryName="Run Functions">
+      <option name="appName" />
+      <option name="appServicePlanName" />
+      <option name="appServicePlanResourceGroup" />
+      <option name="appSettingsKey" value="79ee78a2-a3a3-4c89-847a-98e26c579acf" />
+      <option name="artifact" />
+      <option name="debugOptions" />
+      <option name="deployment" />
+      <option name="deploymentStagingDirectoryPath" />
+      <option name="funcPath" />
+      <option name="functionHostArguments" />
+      <option name="hostJsonPath" />
+      <option name="insightsName" />
+      <option name="instrumentationKey" />
+      <option name="javaVersion" />
+      <option name="localSettingsJsonPath" />
+      <option name="moduleName" />
+      <option name="os" />
+      <option name="pricingTier" />
+      <option name="providerMap">
+        <map />
+      </option>
+      <option name="region" />
+      <option name="resourceGroup" />
+      <option name="stagingFolder" />
+      <option name="subscription" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-9823dce3aa75-b114ca120d71-intellij.indexing.shared.core-IU-242.21829.142" />
+        <option value="bundled-js-predefined-d6986cc7102b-7c0b70fcd90d-JavaScript-IU-242.21829.142" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="141666ad-75e6-4cd9-b82e-586543243d70" name="Changes" comment="" />
+      <created>1728226043898</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1728226043898</updated>
+      <workItem from="1728226045013" duration="113000" />
+      <workItem from="1728296788942" duration="11000" />
+      <workItem from="1728988444942" duration="1794000" />
+      <workItem from="1729066871737" duration="23000" />
+      <workItem from="1729066943393" duration="11000" />
+      <workItem from="1730911668438" duration="942000" />
+      <workItem from="1731576937629" duration="709000" />
+      <workItem from="1731586456539" duration="1000" />
+      <workItem from="1731607595834" duration="17000" />
+      <workItem from="1731607691002" duration="39000" />
+      <workItem from="1731607866712" duration="28000" />
+      <workItem from="1732792767605" duration="147000" />
+      <workItem from="1732824335329" duration="15000" />
+      <workItem from="1732896176879" duration="52000" />
+      <workItem from="1733314829071" duration="13516000" />
+      <workItem from="1733487710213" duration="31773000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>

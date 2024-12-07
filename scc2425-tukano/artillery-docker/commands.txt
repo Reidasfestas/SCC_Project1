@@ -1,0 +1,10 @@
+docker build -t reidasfestas/tests .
+docker push reidasfestas/tests:latest
+
+az group create --name scc2425-artillery-container --location northcentralus
+
+az container create --resource-group scc2425-artillery-container --name artillery-container --image reidasfestas/tests:latest --ports 22 --dns-name-label scc2425-artillery-dns --os-type Linux --cpu 1 --memory 1
+
+az container exec --resource-group scc2425-artillery-container --name artillery-container --exec-command "/bin/bash"
+
+az container delete --resource-group scc2425-artillery-container --name artillery-container

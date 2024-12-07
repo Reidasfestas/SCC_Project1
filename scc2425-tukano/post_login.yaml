@@ -1,0 +1,28 @@
+config:
+    target: http://48.209.186.61/tukano-1/rest
+    phases:
+        - name: post_blob
+          duration: 30 # adjust to allow sequential posting for each user
+          arrivalRate: 1 # post one user at a time to avoid duplicates
+    payload:
+        path: ../data/users.csv
+        order: sequence # selects users sequentially, default is random
+        skipHeader: true # Skip header row
+        delimiter: "," # standard delimiter
+        skipEmptyLines: true # not important in our case
+        fields:
+            - "id"
+            - "pwd"
+            - "email"
+            - "displayName"
+scenarios:
+    - name: TuKanoRegister
+      flow:
+        - post:
+            url: "/login"
+            headers:
+              Content-Type: application/x-www-form-urlencoded
+            form: # Use form data instead of JSON
+              username: "{{ id }}"
+              password: "{{ pwd }}"
+

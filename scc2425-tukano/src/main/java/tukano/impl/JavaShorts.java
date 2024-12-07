@@ -86,7 +86,22 @@ public class JavaShorts implements Shorts {
 	private int getLikeCount(String shortId) {
 		try {
 			String count = jedis.get(LIKES_PREFIX + shortId);
-			return count != null ? Integer.parseInt(count) : 0;
+//			return count != null ? Integer.parseInt(count) : 0;
+
+			int val = 0;
+
+			if(count == null) {
+				var query = format("SELECT l.id FROM Likes l WHERE l.shortId = '%s'", shortId);
+				var likesList = DB.sql(query, Likes.class);
+
+				val = likesList.size();
+
+//				var query = format("SELECT count(*) FROM Likes l WHERE l.shortId = '%s'", shortId);
+//				var likesVar = DB.sql(query, Long.class);
+//				val = likesVar.size();
+
+			}
+			return val;
 		} catch (JedisConnectionException e) {
 			Log.warning("Redis cache operation failed in getLikeCount: " + e.getMessage());
 			return 0;

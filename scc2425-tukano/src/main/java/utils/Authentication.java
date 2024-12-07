@@ -46,9 +46,24 @@ public class Authentication {
 					.secure(false) //ideally it should be true to only work for https requests
 					.httpOnly(true)
 					.build();
-			
-			FakeRedisLayer.getInstance().putSession( new Session( uid, user));
-			
+
+			Session session = new Session( uid, user);
+
+
+//			FakeRedisLayer.getInstance().putSession( session);
+
+			Log.info("A");
+
+			try {
+				String sessionJson = JSON.encode(session); // Serialize the session to JSON
+				RedisCache.getCachePool().getResource().set(uid, sessionJson); // Store in Redis
+			} catch (Exception e) {
+				Log.severe("Error storing session in Redis: " + e.getMessage());
+				throw new RuntimeException("Error during login.");
+			}
+
+			Log.info("B");
+
             return Response.seeOther(URI.create( REDIRECT_TO_AFTER_LOGIN ))
                     .cookie(cookie) 
                     .build();
@@ -94,7 +109,6 @@ public class Authentication {
 			
 		if (session.user() == null || session.user().length() == 0)
 			throw new NotAuthorizedException("No valid session initialized");
-		
 		if (userId.equals("admin") && !session.user().equals(userId))
 			throw new NotAuthorizedException("Invalid user : " + session.user());
 		
